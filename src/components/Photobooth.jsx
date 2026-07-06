@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-
-const API = '/api';
+import { API } from '../lib/api.js';
 
 /* ─── Frame definitions ─── */
 const FRAMES = [

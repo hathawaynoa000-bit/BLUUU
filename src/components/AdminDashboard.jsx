@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-
-const API = '/api';
+import { API } from '../lib/api.js';
 
 function useAuth() {
   const [token, setToken] = useState(() => sessionStorage.getItem('admin_token'));

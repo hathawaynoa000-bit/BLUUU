@@ -69,8 +69,8 @@ export default function HomePage({ onStart }) {
           <div style={S.brandTag}>✨ Couple Experience</div>
           <h1 style={S.title}>BLUUU <span style={S.v3}>V3</span></h1>
           <p style={S.subtitle}>
-            Photobooth virtual romantis dengan teknologi WebRTC.<br />
-            Abadikan momen bersama pasanganmu dimanapun berada.
+            Photobooth virtual .<br />
+            Take the moment .
           </p>
         </div>
 

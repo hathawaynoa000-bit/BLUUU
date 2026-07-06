@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Peer from 'peerjs';
+import { API } from '../lib/api.js';
 
 export const CONNECTION_MODES = {
   NONE: 'NONE',
   LOCAL: 'LOCAL',
   REMOTE: 'REMOTE',
 };
-
-const API = '/api';
 
 export default function WebRTCConnection({ mode, setMode, onConnectionReady, onDataReceived }) {
   const [roomCode, setRoomCode] = useState('');

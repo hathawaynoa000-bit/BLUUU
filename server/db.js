@@ -18,13 +18,19 @@ const isRemoteDb =
 
 const useSSL = isProduction && isRemoteDb;
 
-const pool = new Pool({
+const poolConfig = {
   connectionString,
   ssl: useSSL ? { rejectUnauthorized: false } : false,
   max: isProduction ? 1 : 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
-});
+};
+
+if (connectionString.includes('pooler.supabase.com') && !connectionString.includes('pgbouncer=')) {
+  poolConfig.connectionString = `${connectionString}${connectionString.includes('?') ? '&' : '?'}pgbouncer=true`;
+}
+
+const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('Unexpected database pool error:', err);

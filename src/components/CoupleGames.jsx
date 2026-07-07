@@ -1,64 +1,37 @@
 import React, { useState, useEffect } from 'react';
+import { API } from '../lib/api';
 
-const QUESTIONS = [
+/* ── Default fallback content (used if API fails) ── */
+const DEFAULT_QUESTIONS = [
   'Kapan pertama kali kamu sadar jatuh cinta padaku?',
   'Apa momen terfavorit kita yang selalu kamu ingat?',
   'Mimpi terbesarmu yang ingin kita capai bersama?',
   'Hal apa dariku yang paling kamu suka?',
   'Kalau bisa kembali ke satu hari denganku, hari apa?',
-  'Apa ketakutan terbesar yang belum kamu ceritakan?',
-  'Hal kecil apa yang selalu membuatmu teringat padaku?',
-  'Kalau kita punya satu hari tanpa HP, mau ngapain?',
-  'Apa yang paling ingin kamu pelajari dari kepribadianku?',
-  'Ceritakan satu hal yang belum pernah kamu ceritakan ke siapapun.',
 ];
-
-const TRUTHS = [
+const DEFAULT_TRUTHS = [
   'Apa kebohongan kecil pertama yang pernah kamu katakan padaku?',
   'Siapa yang lebih sering memulai pertengkaran?',
   'Apa yang paling tidak kamu suka tapi tidak pernah bilang?',
-  'Apa yang kamu pikirkan saat pertama kali melihatku?',
-  'Pernahkah kamu berpura-pura setuju padahal tidak?',
-  'Hal apa yang diam-diam kamu kagumi dari orang lain?',
-  'Kapan terakhir kali kamu menangis dan kenapa?',
 ];
-
-const DARES = [
+const DEFAULT_DARES = [
   'Nyanyikan bait lagu cinta favorit dengan suara penuh!',
   'Ceritakan kenangan paling memalukan kita.',
   'Tulis pesan romantis 3 baris dan bacakan keras-keras.',
-  'Tiru gaya foto pre-wedding, tahan 10 detik.',
-  'Kirimkan meme lucu ke kontak paling jarang dibalas.',
-  'Buat konten TikTok 15 detik langsung sekarang.',
 ];
-
-const LIKELY_QUESTIONS = [
+const DEFAULT_LIKELY = [
   'Siapa yang lebih mungkin terlambat untuk kencan?',
   'Siapa yang lebih mungkin menghabiskan uang lebih?',
   'Siapa yang lebih mungkin menangis di film romantis?',
-  'Siapa yang lebih mungkin masak makan malam spesial?',
-  'Siapa yang lebih mungkin lupa ulang tahun pasangan?',
-  'Siapa yang lebih mungkin panik saat ada serangga?',
-  'Siapa yang lebih mungkin sukses dulu?',
-  'Siapa yang lebih mungkin tidur di sofa setelah ribut?',
-];
-
-const POSES = [
-  { title: '🤳 Selfie Senyum Lebar', desc: 'Tempel pipi, senyum selebar mungkin!' },
-  { title: '🤗 Pelukan Terbaik', desc: 'Pelukan paling hangat, tampak kamera!' },
-  { title: '🤪 Muka Paling Lucu', desc: 'Boleh semua gaya gila-gilaan!' },
-  { title: '👑 Gaya Ratu & Raja', desc: 'Tampil anggun dan wibawa!' },
-  { title: '🤫 Bisik Rahasia', desc: 'Pura-pura bisik, ekspresi berlebihan!' },
 ];
 
 const GAMES = [
   { id: 'deep',   emoji: '💬', name: 'Deep Talk',       desc: 'Pertanyaan mendalam' },
   { id: 'tod',    emoji: '🔥', name: 'Truth or Dare',   desc: 'Jujur atau tantangan' },
   { id: 'likely', emoji: '🏆', name: 'Siapa Paling...', desc: 'Voting real-time' },
-  { id: 'pose',   emoji: '🎭', name: 'Pose Challenge',  desc: 'Pose & foto langsung' },
 ];
 
-export default function CoupleGames({ isRemote, connState, sendData, remoteGameState, onTriggerBoothCapture }) {
+export default function CoupleGames({ isRemote, connState, sendData, remoteGameState }) {
   const [game, setGame] = useState(null);
   const [qIdx, setQIdx] = useState(0);
   const [todType, setTodType] = useState(null);
@@ -66,12 +39,32 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
   const [lIdx, setLIdx] = useState(0);
   const [myVote, setMyVote] = useState(null);
   const [remoteVote, setRemoteVote] = useState(null);
-  const [poseIdx, setPoseIdx] = useState(0);
-  const [cooldown, setCooldown] = useState(false);
+
+  // Dynamic content from API
+  const [questions, setQuestions] = useState(DEFAULT_QUESTIONS);
+  const [truths, setTruths] = useState(DEFAULT_TRUTHS);
+  const [dares, setDares] = useState(DEFAULT_DARES);
+  const [likelyQs, setLikelyQs] = useState(DEFAULT_LIKELY);
 
   const live = !isRemote || connState === 'connected';
   const send = (d) => sendData?.(d);
 
+  // Fetch content from API on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/content`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.deep?.length)   setQuestions(data.deep);
+        if (data.truth?.length)  setTruths(data.truth);
+        if (data.dare?.length)   setDares(data.dare);
+        if (data.likely?.length) setLikelyQs(data.likely);
+      } catch (_) { /* fallback to defaults */ }
+    })();
+  }, []);
+
+  // Handle remote game state sync
   useEffect(() => {
     if (!remoteGameState) return;
     const d = remoteGameState;
@@ -79,34 +72,30 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
       if (d.game === 'deep')   setQIdx(d.idx);
       if (d.game === 'tod')    { setTodType(d.todType); setTodIdx(d.idx); }
       if (d.game === 'likely') { setLIdx(d.idx); setMyVote(null); setRemoteVote(null); }
-      if (d.game === 'pose')   setPoseIdx(d.idx);
       setGame(d.game);
     }
     if (d.type === 'VOTE') setRemoteVote(d.vote);
     if (d.type === 'RESET') { setGame(null); setMyVote(null); setRemoteVote(null); }
   }, [remoteGameState]);
 
-  const start = (id) => { setGame(id); setQIdx(0); setTodType(null); setMyVote(null); setRemoteVote(null); setPoseIdx(0); send({ type: 'GAME_STATE', game: id, idx: 0 }); };
+  const start = (id) => { setGame(id); setQIdx(0); setTodType(null); setMyVote(null); setRemoteVote(null); send({ type: 'GAME_STATE', game: id, idx: 0 }); };
   const reset = () => { setGame(null); setMyVote(null); setRemoteVote(null); send({ type: 'RESET' }); };
 
-  const nextQ = () => { const n = (qIdx+1) % QUESTIONS.length; setQIdx(n); send({ type: 'GAME_STATE', game: 'deep', idx: n }); };
-  const prevQ = () => { const n = (qIdx-1+QUESTIONS.length) % QUESTIONS.length; setQIdx(n); send({ type: 'GAME_STATE', game: 'deep', idx: n }); };
+  const nextQ = () => { const n = (qIdx+1) % questions.length; setQIdx(n); send({ type: 'GAME_STATE', game: 'deep', idx: n }); };
+  const prevQ = () => { const n = (qIdx-1+questions.length) % questions.length; setQIdx(n); send({ type: 'GAME_STATE', game: 'deep', idx: n }); };
 
-  const pickTod = (type) => { const arr = type === 'truth' ? TRUTHS : DARES; const i = Math.floor(Math.random()*arr.length); setTodType(type); setTodIdx(i); send({ type: 'GAME_STATE', game: 'tod', todType: type, idx: i }); };
+  const pickTod = (type) => { const arr = type === 'truth' ? truths : dares; const i = Math.floor(Math.random()*arr.length); setTodType(type); setTodIdx(i); send({ type: 'GAME_STATE', game: 'tod', todType: type, idx: i }); };
 
-  const nextL = () => { const n = (lIdx+1) % LIKELY_QUESTIONS.length; setLIdx(n); setMyVote(null); setRemoteVote(null); send({ type: 'GAME_STATE', game: 'likely', idx: n }); };
+  const nextL = () => { const n = (lIdx+1) % likelyQs.length; setLIdx(n); setMyVote(null); setRemoteVote(null); send({ type: 'GAME_STATE', game: 'likely', idx: n }); };
   const vote = (v) => { setMyVote(v); send({ type: 'VOTE', vote: v }); };
-
-  const nextPose = () => { const n = (poseIdx+1) % POSES.length; setPoseIdx(n); send({ type: 'GAME_STATE', game: 'pose', idx: n }); };
-  const poseCapture = () => { if (cooldown) return; setCooldown(true); onTriggerBoothCapture?.(); setTimeout(() => setCooldown(false), 4000); };
 
   /* ── Game views ── */
   const renderGame = () => {
     if (game === 'deep') return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <span className="pill pill-pink">💬 Deep Talk · {qIdx+1}/{QUESTIONS.length}</span>
+        <span className="pill pill-pink">💬 Deep Talk · {qIdx+1}/{questions.length}</span>
         <div className="frosted-card">
-          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>"{QUESTIONS[qIdx]}"</p>
+          <p style={{ fontSize: 16, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>"{questions[qIdx]}"</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
           <button className="btn btn-glass btn-sm" onClick={prevQ}>← Prev</button>
@@ -141,7 +130,7 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="frosted-card" style={{ background: todType === 'truth' ? 'rgba(99,102,241,0.06)' : 'rgba(232,68,106,0.06)' }}>
               <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>
-                "{todType === 'truth' ? TRUTHS[todIdx] : DARES[todIdx]}"
+                "{todType === 'truth' ? truths[todIdx] : dares[todIdx]}"
               </p>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
@@ -155,9 +144,9 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
 
     if (game === 'likely') return (
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <span className="pill pill-pink">🏆 Siapa Paling... · {lIdx+1}/{LIKELY_QUESTIONS.length}</span>
+        <span className="pill pill-pink">🏆 Siapa Paling... · {lIdx+1}/{likelyQs.length}</span>
         <div className="frosted-card">
-          <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>"{LIKELY_QUESTIONS[lIdx]}"</p>
+          <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.55 }}>"{likelyQs[lIdx]}"</p>
         </div>
         {!myVote ? (
           <div style={{ display: 'flex', gap: 10 }}>
@@ -190,23 +179,6 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
       </div>
     );
 
-    if (game === 'pose') return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-        <span className="pill pill-pink">🎭 Pose · {poseIdx+1}/{POSES.length}</span>
-        <div className="frosted-card">
-          <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 8 }}>{POSES[poseIdx].title}</div>
-          <p style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)' }}>{POSES[poseIdx].desc}</p>
-        </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button className="btn btn-accent" style={{ flex: 1 }} onClick={poseCapture} disabled={cooldown}>
-            {cooldown ? '⏱ Siap-siap...' : '📸 Foto Sekarang!'}
-          </button>
-          <button className="btn btn-glass btn-sm" onClick={nextPose}>Pose Lain →</button>
-        </div>
-        {cooldown && <div className="notice notice-success">Countdown dimulai! Berpose sekarang! 💕</div>}
-      </div>
-    );
-
     return null;
   };
 
@@ -223,11 +195,11 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
 
       {/* Game grid */}
       {!game ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {GAMES.map(g => (
             <button key={g.id} onClick={() => start(g.id)} className="glass" style={{
-              padding: '16px 14px', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-              display: 'flex', flexDirection: 'column', gap: 6, border: '1.5px solid rgba(255,255,255,0.45)',
+              padding: '16px 14px', cursor: 'pointer', textAlign: 'center', fontFamily: 'inherit',
+              display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', border: '1.5px solid rgba(255,255,255,0.45)',
             }}>
               <span style={{ fontSize: 24 }}>{g.emoji}</span>
               <span style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>{g.name}</span>

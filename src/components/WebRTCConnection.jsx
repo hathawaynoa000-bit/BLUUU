@@ -343,7 +343,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Kamar Baru</div>
             <label style={labelStyle}>Kode Kamar</label>
-            <input className="field" placeholder="CINTA-2026" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
+            <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
             <label style={labelStyle}>Kata Sandi</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
             <button type="submit" className="btn btn-accent" disabled={submitting} style={{ marginTop: 4 }}>
@@ -355,7 +355,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
           <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: 10, borderLeft: '1px solid rgba(0,0,0,0.04)', paddingLeft: 20 }}>
             <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Kamar</div>
             <label style={labelStyle}>Kode Kamar</label>
-            <input className="field" placeholder="CINTA-2026" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
+            <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
             <label style={labelStyle}>Kata Sandi</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
             <button type="submit" className="btn btn-glass" disabled={submitting}

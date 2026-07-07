@@ -80,7 +80,7 @@ function LoginForm({ onLogin }) {
 
         <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(232,68,106,0.05)', border: '1px solid rgba(232,68,106,0.1)' }}>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 700, marginBottom: 5 }}>💡 Info Login</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Username: <code style={{ fontWeight: 700 }}>admin</code> · Password: <code style={{ fontWeight: 700 }}>adminpinkglass</code></div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Username: <code style={{ fontWeight: 700 }}>admin</code> · Password: <code style={{ fontWeight: 700 }}>tanyakeyangbuat</code></div>
         </div>
       </div>
     </div>
@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [rooms, setRooms] = useState([]);
   const [photos, setPhotos] = useState([]);
+  const [content, setContent] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(null);
@@ -100,21 +101,31 @@ export default function AdminDashboard() {
   const [previewPhoto, setPreviewPhoto] = useState(null);
   const [tab, setTab] = useState('overview');
 
+  // Game Content CRUD States
+  const [contentTab, setContentTab] = useState('deep');
+  const [editingContent, setEditingContent] = useState(null);
+  const [deletingContent, setDeletingContent] = useState(null);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [inputText, setInputText] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   const fetchAll = async () => {
     if (!token) return;
     setLoading(true); setError('');
     try {
-      const [sr, rr, pr] = await Promise.all([
+      const [sr, rr, pr, cr] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }),
         fetch(`${API}/admin/rooms`, { headers }),
         fetch(`${API}/admin/photos`, { headers }),
+        fetch(`${API}/admin/content`, { headers }),
       ]);
-      if (sr.status === 401 || rr.status === 401 || pr.status === 401) { logout(); return; }
+      if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401) { logout(); return; }
       setStats(await sr.json());
       setRooms(await rr.json());
       setPhotos(await pr.json());
+      setContent(await cr.json());
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -139,6 +150,67 @@ export default function AdminDashboard() {
     } catch (e) { setError(e.message); }
   };
 
+  // Game Content Actions
+  const handleAddContent = async (e) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    setActionLoading(true);
+    try {
+      const r = await fetch(`${API}/admin/content`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ game_type: contentTab, text_content: inputText }),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || 'Gagal menambahkan konten');
+      setContent(prev => [...prev, d]);
+      setInputText('');
+      setShowAddModal(false);
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleUpdateContent = async (id, text, is_active) => {
+    setActionLoading(true);
+    try {
+      const body = {};
+      if (text !== undefined) body.text_content = text;
+      if (is_active !== undefined) body.is_active = is_active;
+
+      const r = await fetch(`${API}/admin/content/${id}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || 'Gagal mengubah konten');
+      setContent(prev => prev.map(c => c.id === id ? d : c));
+      setEditingContent(null);
+      setInputText('');
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleDeleteContent = async (id) => {
+    try {
+      const r = await fetch(`${API}/admin/content/${id}`, { method: 'DELETE', headers });
+      if (!r.ok) throw new Error('Gagal menghapus konten');
+      setContent(prev => prev.filter(c => c.id !== id));
+      setDeletingContent(null);
+    } catch (err) { setError(err.message); }
+  };
+
+  const handleSeedContent = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin me-reset semua game ke pertanyaan default? Tindakan ini akan menghapus semua kuis custom yang sudah Anda buat.')) return;
+    setLoading(true);
+    try {
+      const r = await fetch(`${API}/admin/content/seed`, { method: 'POST', headers });
+      if (!r.ok) throw new Error('Gagal me-reset konten default');
+      await fetchAll();
+    } catch (err) { setError(err.message); }
+    finally { setLoading(false); }
+  };
+
   const statusPill = (s) => {
     const m = { active: ['Active','pill-green'], waiting: ['Waiting','pill-amber'], full: ['Full','pill-pink'], inactive: ['Inactive','pill-red'] };
     const [label, cls] = m[s] || m.inactive;
@@ -153,7 +225,7 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>Dashboard</h1>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Kelola kamar, foto, dan statistik BLUUU</p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Kelola kamar, foto, games, dan statistik BLUUU</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-glass btn-sm" onClick={fetchAll} disabled={loading}>
@@ -167,9 +239,9 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="seg-control">
-        {['overview', 'rooms', 'photos'].map(t => (
+        {['overview', 'rooms', 'photos', 'games'].map(t => (
           <button key={t} onClick={() => setTab(t)} className={`seg-btn${tab === t ? ' active' : ''}`}>
-            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Kamar' : '📸 Foto Gallery'}
+            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Kamar' : t === 'photos' ? '📸 Foto Gallery' : '🎮 Konten Game'}
           </button>
         ))}
       </div>
@@ -299,6 +371,160 @@ export default function AdminDashboard() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Game Content Tab */}
+      {tab === 'games' && (
+        <div className="glass" style={{ padding: '20px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+            <div>
+              <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Kelola Pertanyaan & Kuis</span>
+              <div style={{ fontSize: 10.5, color: 'var(--text-tertiary)', marginTop: 2 }}>Edit daftar kuis game real-time pasangan</div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-accent btn-sm" onClick={() => { setInputText(''); setShowAddModal(true); }}>
+                ➕ Tambah Kuis
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={handleSeedContent} style={{ borderColor: 'rgba(232,68,106,0.3)' }}>
+                🔄 Reset ke Bawaan
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-tabs for each game type */}
+          <div className="seg-control" style={{ marginBottom: 16 }}>
+            {['deep', 'truth', 'dare', 'likely'].map(t => (
+              <button key={t} onClick={() => setContentTab(t)} className={`seg-btn${contentTab === t ? ' active' : ''}`} style={{ fontSize: 11.5 }}>
+                {t === 'deep' ? '💬 Deep Talk' : t === 'truth' ? '💎 Truth' : t === 'dare' ? '🔥 Dare' : '🏆 Siapa Paling'}
+              </button>
+            ))}
+          </div>
+
+          {/* Filtered questions table */}
+          {content.filter(c => c.game_type === contentTab).length === 0 ? (
+            <div style={{ padding: '44px 24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+              <div style={{ fontSize: 36, marginBottom: 10 }}>🎮</div>
+              Belum ada kuis untuk kategori ini. Tambahkan kuis baru!
+            </div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Isi Kuis</th>
+                    <th style={{ width: 100 }}>Status</th>
+                    <th style={{ width: 180, textAlign: 'right' }}>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {content.filter(c => c.game_type === contentTab).map((c) => (
+                    <tr key={c.id}>
+                      <td>
+                        {editingContent?.id === c.id ? (
+                          <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                            <input
+                              className="field"
+                              value={inputText}
+                              onChange={e => setInputText(e.target.value)}
+                              style={{ padding: '8px 12px', fontSize: 13, flex: 1 }}
+                              autoFocus
+                            />
+                            <button className="btn btn-accent btn-sm" onClick={() => handleUpdateContent(c.id, inputText, undefined)} disabled={actionLoading}>
+                              Simpan
+                            </button>
+                            <button className="btn btn-glass btn-sm" onClick={() => { setEditingContent(null); setInputText(''); }}>
+                              Batal
+                            </button>
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: 13.5, color: c.is_active ? 'var(--text-primary)' : 'var(--text-quaternary)', textDecoration: c.is_active ? 'none' : 'line-through' }}>
+                            {c.text_content}
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <button
+                          className={`pill ${c.is_active ? 'pill-green' : 'pill-red'}`}
+                          style={{ border: 'none', cursor: 'pointer', outline: 'none' }}
+                          onClick={() => handleUpdateContent(c.id, undefined, !c.is_active)}
+                          title="Klik untuk mengubah status"
+                        >
+                          {c.is_active ? 'Aktif' : 'Nonaktif'}
+                        </button>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        {editingContent?.id !== c.id && (
+                          <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
+                            <button className="btn btn-glass btn-sm" onClick={() => { setEditingContent(c); setInputText(c.text_content); }}>
+                              ✏️ Edit
+                            </button>
+                            <button className="btn btn-outline btn-sm" onClick={() => setDeletingContent(c.id)} style={{ borderColor: 'rgba(255,59,48,0.25)', color: '#b71c1c' }}>
+                              🗑️ Hapus
+                            </button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Add Content Modal */}
+      {showAddModal && (
+        <div className="overlay" onClick={() => setShowAddModal(false)}>
+          <div className="panel" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+            <div style={{ marginBottom: 20 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Tambah Pertanyaan Baru</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--text-tertiary)' }}>
+                Menambahkan ke kuis: <span style={{ fontWeight: 700, color: 'var(--accent)' }}>
+                  {contentTab === 'deep' ? 'Deep Talk' : contentTab === 'truth' ? 'Truth' : contentTab === 'dare' ? 'Dare' : 'Siapa Paling'}
+                </span>
+              </p>
+            </div>
+            <form onSubmit={handleAddContent} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <div>
+                <label style={labelStyle}>Isi Kuis / Pertanyaan</label>
+                <textarea
+                  className="field"
+                  rows="3"
+                  placeholder={contentTab === 'deep' ? 'Contoh: Apa sifat pasanganku yang paling membuatku kagum?' : 'Contoh pertanyaan kuis...'}
+                  value={inputText}
+                  onChange={e => setInputText(e.target.value)}
+                  style={{ width: '100%', fontFamily: 'inherit', resize: 'vertical', padding: '10px 14px' }}
+                  required
+                  autoFocus
+                />
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
+                <button type="button" className="btn btn-glass" style={{ flex: 1 }} onClick={() => setShowAddModal(false)}>Batal</button>
+                <button type="submit" className="btn btn-accent" style={{ flex: 1 }} disabled={actionLoading}>
+                  {actionLoading ? 'Menyimpan...' : 'Simpan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Content modal */}
+      {deletingContent && (
+        <div className="overlay" onClick={() => setDeletingContent(null)}>
+          <div className="panel" style={{ maxWidth: 340 }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 44, marginBottom: 10 }}>🗑️</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Hapus Kuis?</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Pertanyaan ini akan dihapus permanen dari game.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-glass" style={{ flex: 1 }} onClick={() => setDeletingContent(null)}>Batal</button>
+              <button className="btn btn-accent" style={{ flex: 1, background: 'linear-gradient(180deg, #ff6b6b, #dc2626)', boxShadow: '0 6px 20px rgba(220,38,38,0.3)' }} onClick={() => handleDeleteContent(deletingContent)}>Hapus</button>
+            </div>
+          </div>
         </div>
       )}
 

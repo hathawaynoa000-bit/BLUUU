@@ -56,12 +56,6 @@ export default function App() {
     if (connectionData?.sendData) connectionData.sendData({ type: 'SHUTTER_TRIGGER' });
   };
 
-  const handlePoseCapture = () => {
-    setSyncShutterState('trigger');
-    triggerSyncCapture();
-    setTimeout(() => setSyncShutterState('idle'), 500);
-  };
-
   const isConnected   = connectionData?.connState === 'connected';
   const showWorkspace = mode === CONNECTION_MODES.LOCAL || (mode === CONNECTION_MODES.REMOTE && isConnected);
 
@@ -178,7 +172,6 @@ export default function App() {
                 connState={connectionData?.connState}
                 sendData={connectionData?.sendData}
                 remoteGameState={remoteGameState}
-                onTriggerBoothCapture={handlePoseCapture}
               />
             </div>
           </div>

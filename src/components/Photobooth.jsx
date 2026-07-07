@@ -1,75 +1,300 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { API } from '../lib/api.js';
 
-/* ─── Frame definitions ─── */
+/* ─── Strip Templates definitions ─── */
 const FRAMES = [
   {
-    id: 'pink-glass', name: 'Pink Glass', emoji: '💗',
-    draw: (ctx, w, h) => {
-      const g = ctx.createLinearGradient(0, 0, w, h);
-      g.addColorStop(0, 'rgba(255,140,165,0.8)');
-      g.addColorStop(0.5, 'rgba(255,200,215,0.65)');
-      g.addColorStop(1, 'rgba(255,100,140,0.8)');
-      ctx.save(); ctx.fillStyle = g;
-      const b = 24;
-      ctx.fillRect(0,0,w,b); ctx.fillRect(0,h-b,w,b);
-      ctx.fillRect(0,0,b,h); ctx.fillRect(w-b,0,b,h);
-      ctx.font = '18px serif'; ctx.fillStyle = '#ff4d6d';
-      ctx.fillText('💗', 6, 22); ctx.fillText('💗', w-28, 22);
-      ctx.fillText('💗', 6, h-6); ctx.fillText('💗', w-28, h-6);
-      ctx.restore();
+    id: 'classic-pink',
+    name: 'Classic Pink',
+    emoji: '💗',
+    preview: '#ffd4de',
+    getHeaderHeight: () => 60,
+    getFooterHeight: () => 60,
+    getPadding: () => ({ top: 18, bottom: 18, left: 18, right: 18 }),
+    getGap: () => 8,
+    drawBg: (ctx, w, h) => {
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, '#fff5f7');
+      bg.addColorStop(1, '#ffd4de');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(x, y, pw, ph);
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#e8446a';
+      ctx.font = 'bold 18px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`💗  ${coupleName.toUpperCase()}  💗`, w / 2, 42);
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#e8446a';
+      ctx.font = 'bold 13px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`BLUUU V3`, w / 2, h - 34);
+      ctx.font = '10px Poppins, sans-serif';
+      ctx.fillStyle = '#a38890';
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - 16);
     }
   },
   {
-    id: 'film-strip', name: 'Film Strip', emoji: '🎞️',
-    draw: (ctx, w, h) => {
-      ctx.save(); ctx.fillStyle = '#1a0a0e';
-      ctx.fillRect(0,0,w,36); ctx.fillRect(0,h-36,w,36);
-      ctx.fillStyle = '#fff';
-      for (let i = 0; i < 8; i++) {
-        const x = (i/8)*w + (w/16) - 10;
-        ctx.fillRect(x,8,20,20); ctx.fillRect(x,h-28,20,20);
+    id: 'dark-mode',
+    name: 'Dark Mode',
+    emoji: '🖤',
+    preview: '#121212',
+    getHeaderHeight: () => 50,
+    getFooterHeight: () => 50,
+    getPadding: () => ({ top: 15, bottom: 15, left: 20, right: 20 }),
+    getGap: () => 10,
+    drawBg: (ctx, w, h) => {
+      ctx.fillStyle = '#121212';
+      ctx.fillRect(0, 0, w, h);
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, pw, ph);
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '600 12px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`M O M E N T S  ·  ${coupleName.toUpperCase()}`, w / 2, 34);
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#888888';
+      ctx.font = '9px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase(), w / 2, h - 22);
+    }
+  },
+  {
+    id: 'newspaper',
+    name: 'Newspaper',
+    emoji: '📰',
+    preview: '#f4ecd8',
+    getHeaderHeight: () => 110,
+    getFooterHeight: () => 60,
+    getPadding: () => ({ top: 15, bottom: 15, left: 20, right: 20 }),
+    getGap: () => 12,
+    drawBg: (ctx, w, h) => {
+      ctx.fillStyle = '#f4ecd8';
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = 'rgba(0,0,0,0.06)';
+      ctx.lineWidth = 1;
+      for (let i = 40; i < h; i += 40) {
+        ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
       }
-      ctx.restore();
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, pw, ph);
+      ctx.strokeStyle = '#222';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(x - 4, y - 4, pw + 8, ph + 8);
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#111';
+      ctx.textAlign = 'center';
+      ctx.font = '900 24px Georgia, serif';
+      ctx.fillText(coupleName.toUpperCase(), w / 2, 42);
+      
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(15, 54); ctx.lineTo(w - 15, 54); ctx.stroke();
+      ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(15, 58); ctx.lineTo(w - 15, 58); ctx.stroke();
+      
+      ctx.fillStyle = '#333';
+      ctx.font = '800 9px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('EDISI SPESIAL', 20, 72);
+      
+      ctx.textAlign = 'right';
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase(), w - 20, 72);
+      
+      ctx.textAlign = 'center';
+      ctx.font = 'italic 10px Georgia, serif';
+      ctx.fillText('“Love story continues, beautiful person coming soon!”', w / 2, 92);
+      
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath(); ctx.moveTo(15, 102); ctx.lineTo(w - 15, 102); ctx.stroke();
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.strokeStyle = '#111';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(15, h - 48); ctx.lineTo(w - 15, h - 48); ctx.stroke();
+      
+      ctx.fillStyle = '#222';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('VOL. I  NO. 15', 20, h - 28);
+      
+      ctx.textAlign = 'right';
+      ctx.fillText('BLUUU © 2026', w - 20, h - 28);
+      
+      ctx.fillStyle = '#111';
+      ctx.fillRect(w / 2 - 20, h - 38, 3, 16);
+      ctx.fillRect(w / 2 - 14, h - 38, 2, 16);
+      ctx.fillRect(w / 2 - 10, h - 38, 4, 16);
+      ctx.fillRect(w / 2 - 4, h - 38, 1, 16);
+      ctx.fillRect(w / 2 - 1, h - 38, 3, 16);
+      ctx.fillRect(w / 2 + 4, h - 38, 2, 16);
+      ctx.fillRect(w / 2 + 8, h - 38, 4, 16);
+      ctx.fillRect(w / 2 + 14, h - 38, 1, 16);
     }
   },
   {
-    id: 'polaroid', name: 'Polaroid', emoji: '📷',
-    draw: (ctx, w, h) => {
-      ctx.save(); ctx.fillStyle = '#fff';
-      ctx.fillRect(0,0,w,16); ctx.fillRect(0,0,16,h);
-      ctx.fillRect(w-16,0,16,h); ctx.fillRect(0,h-52,w,52);
-      ctx.fillStyle = '#1d1017'; ctx.font = 'bold 14px Poppins,sans-serif';
-      ctx.textAlign = 'center'; ctx.fillText('💖 Our Moment 💖', w/2, h-26);
-      ctx.textAlign = 'start'; ctx.restore();
+    id: 'film-strip',
+    name: 'Film Strip',
+    emoji: '🎞️',
+    preview: '#262626',
+    getHeaderHeight: () => 50,
+    getFooterHeight: () => 50,
+    getPadding: () => ({ top: 10, bottom: 10, left: 45, right: 45 }),
+    getGap: () => 14,
+    drawBg: (ctx, w, h) => {
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(0, 0, w, h);
+      
+      ctx.fillStyle = '#0a0a0a';
+      const holeW = 14;
+      const holeH = 22;
+      const step = 44;
+      const r = 3;
+      
+      const drawHole = (x, y) => {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + holeW - r, y);
+        ctx.quadraticCurveTo(x + holeW, y, x + holeW, y + r);
+        ctx.lineTo(x + holeW, y + holeH - r);
+        ctx.quadraticCurveTo(x + holeW, y + holeH, x + holeW - r, y + holeH);
+        ctx.lineTo(x + r, y + holeH);
+        ctx.quadraticCurveTo(x, y + holeH, x, y + holeH - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
+      };
+
+      for (let y = 15; y < h - 15; y += step) {
+        drawHole(15, y);
+        drawHole(w - 15 - holeW, y);
+      }
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(x, y, pw, ph);
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#999999';
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`KODAK PORTRA 400  ·  ${coupleName.toUpperCase()}`, w / 2, 32);
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#999999';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(`SAFETY FILM  ·  ${new Date().getFullYear()}`, w / 2, h - 22);
     }
   },
   {
-    id: 'floral', name: 'Floral', emoji: '🌸',
-    draw: (ctx, w, h) => {
-      ctx.save(); ctx.fillStyle = 'rgba(255,220,230,0.55)';
-      ctx.fillRect(0,0,w,32); ctx.fillRect(0,h-32,w,32);
-      ctx.fillRect(0,0,32,h); ctx.fillRect(w-32,0,32,h);
-      const f = ['🌸','🌺','🌷'];
-      [[8,26],[w-30,26],[8,h-8],[w-30,h-8],[w/2-10,24],[w/2-10,h-8]].forEach(([x,y],i) => {
-        ctx.font = '18px serif'; ctx.fillText(f[i%3], x, y);
-      });
-      ctx.restore();
-    }
-  },
-  {
-    id: 'gold', name: 'Gold Deco', emoji: '✨',
-    draw: (ctx, w, h) => {
+    id: 'neon-glow',
+    name: 'Neon Glow',
+    emoji: '✨',
+    preview: '#090d16',
+    getHeaderHeight: () => 60,
+    getFooterHeight: () => 50,
+    getPadding: () => ({ top: 15, bottom: 15, left: 22, right: 22 }),
+    getGap: () => 10,
+    drawBg: (ctx, w, h) => {
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(0, 0, w, h);
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
       ctx.save();
-      const g = ctx.createLinearGradient(0,0,w,0);
-      g.addColorStop(0,'#b8860b'); g.addColorStop(0.3,'#ffd700');
-      g.addColorStop(0.5,'#fffacd'); g.addColorStop(0.7,'#ffd700');
-      g.addColorStop(1,'#b8860b');
-      ctx.fillStyle = g;
-      const b = 20;
-      ctx.fillRect(0,0,w,b); ctx.fillRect(0,h-b,w,b);
-      ctx.fillRect(0,0,b,h); ctx.fillRect(w-b,0,b,h);
+      ctx.shadowColor = '#ff007f';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = '#ff007f';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, pw, ph);
       ctx.restore();
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.save();
+      ctx.shadowColor = '#00ffff';
+      ctx.shadowBlur = 8;
+      ctx.fillStyle = '#00ffff';
+      ctx.font = 'bold 18px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`⚡  ${coupleName.toUpperCase()}  ⚡`, w / 2, 40);
+      ctx.restore();
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.save();
+      ctx.shadowColor = '#ff007f';
+      ctx.shadowBlur = 6;
+      ctx.fillStyle = '#ff007f';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`NEON LIGHTS`, w / 2, h - 22);
+      ctx.restore();
+    }
+  },
+  {
+    id: 'vintage-brown',
+    name: 'Vintage Brown',
+    emoji: '🤎',
+    preview: '#cfae8b',
+    getHeaderHeight: () => 70,
+    getFooterHeight: () => 56,
+    getPadding: () => ({ top: 15, bottom: 15, left: 20, right: 20 }),
+    getGap: () => 8,
+    drawBg: (ctx, w, h) => {
+      const bg = ctx.createLinearGradient(0, 0, w, h);
+      bg.addColorStop(0, '#e8d3b9');
+      bg.addColorStop(1, '#cfae8b');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, w, h);
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(10, 10, w - 20, h - 20);
+    },
+    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(x, y, pw, ph);
+      
+      const size = 12;
+      ctx.fillStyle = '#8b5a2b';
+      ctx.fillRect(x - 2, y - 2, size, 2);
+      ctx.fillRect(x - 2, y - 2, 2, size);
+      ctx.fillRect(x + pw + 2 - size, y - 2, size, 2);
+      ctx.fillRect(x + pw, y - 2, 2, size);
+      ctx.fillRect(x - 2, y + ph, size, 2);
+      ctx.fillRect(x - 2, y + ph + 2 - size, 2, size);
+      ctx.fillRect(x + pw + 2 - size, y + ph, size, 2);
+      ctx.fillRect(x + pw, y + ph + 2 - size, 2, size);
+    },
+    drawHeader: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#5c3a21';
+      ctx.font = 'italic bold 20px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(coupleName, w / 2, 45);
+    },
+    drawFooter: (ctx, w, h, coupleName) => {
+      ctx.fillStyle = '#5c3a21';
+      ctx.font = '11px Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - 24);
     }
   },
 ];
@@ -247,8 +472,8 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     ctx.restore();
     ctx.filter = 'none';
 
-    // Frame overlay
-    currentFrame.draw(ctx, W, H);
+    // Note: Frames are no longer drawn directly on the raw capture; 
+    // instead they are generated dynamically during strip layout compilation!
 
     const src  = canvas.toDataURL('image/jpeg', 0.92);
     const next = [...currentCaptures, { src, frame: currentFrame.name, filter: currentFilter.name }].slice(-4);
@@ -258,58 +483,61 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   };
 
   const buildStrip = (shots) => {
-    const W = 420, PH = 310, gap = 8, pad = 18, foot = 56;
-    const H = PH * 4 + gap * 3 + pad * 2 + foot;
+    const W = 420;
+    const currentFrame = frameRef.current;
+
+    const pad = currentFrame.getPadding();
+    const gap = currentFrame.getGap();
+    const headH = currentFrame.getHeaderHeight();
+    const footH = currentFrame.getFooterHeight();
+
+    const pw = W - pad.left - pad.right;
+    const ph = Math.round(pw * 0.74); // 4:3 landscape ratio
+
+    const H = pad.top + headH + (ph * 4) + (gap * 3) + footH + pad.bottom;
+
     const canvas = document.createElement('canvas');
     canvas.width  = W;
     canvas.height = H;
     const ctx = canvas.getContext('2d');
 
-    // Background
-    const bg = ctx.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, '#fff5f7');
-    bg.addColorStop(1, '#ffd4de');
-    ctx.fillStyle = bg;
-    // rounded rect polyfill
-    const r = 16;
-    ctx.beginPath();
-    ctx.moveTo(r, 0); ctx.lineTo(W-r, 0); ctx.quadraticCurveTo(W, 0, W, r);
-    ctx.lineTo(W, H-r); ctx.quadraticCurveTo(W, H, W-r, H);
-    ctx.lineTo(r, H); ctx.quadraticCurveTo(0, H, 0, H-r);
-    ctx.lineTo(0, r); ctx.quadraticCurveTo(0, 0, r, 0);
-    ctx.closePath(); ctx.fill();
+    // Draw background
+    currentFrame.drawBg(ctx, W, H);
+
+    // Draw header
+    currentFrame.drawHeader(ctx, W, H, coupleNamesRef.current || 'Kita');
 
     let loaded = 0;
     shots.forEach((s, i) => {
       const img = new Image();
       img.onload = () => {
-        const y = pad + i * (PH + gap);
+        const y = pad.top + headH + i * (ph + gap);
+        const x = pad.left;
+
         ctx.save();
-        // clip with rounded corners (polyfill)
-        const cr = 8;
-        ctx.beginPath();
-        ctx.moveTo(pad + cr, y); ctx.lineTo(W - pad - cr, y);
-        ctx.quadraticCurveTo(W - pad, y, W - pad, y + cr);
-        ctx.lineTo(W - pad, y + PH - cr); ctx.quadraticCurveTo(W - pad, y + PH, W - pad - cr, y + PH);
-        ctx.lineTo(pad + cr, y + PH); ctx.quadraticCurveTo(pad, y + PH, pad, y + PH - cr);
-        ctx.lineTo(pad, y + cr); ctx.quadraticCurveTo(pad, y, pad + cr, y);
-        ctx.closePath(); ctx.clip();
-        ctx.drawImage(img, pad, y, W - pad * 2, PH);
+        // Clip with rounded corners (Classic Pink and Vintage templates only)
+        if (currentFrame.id === 'classic-pink' || currentFrame.id === 'vintage-brown') {
+          const cr = 8;
+          ctx.beginPath();
+          ctx.moveTo(x + cr, y); ctx.lineTo(x + pw - cr, y);
+          ctx.quadraticCurveTo(x + pw, y, x + pw, y + cr);
+          ctx.lineTo(x + pw, y + ph - cr); ctx.quadraticCurveTo(x + pw, y + ph, x + pw - cr, y + ph);
+          ctx.lineTo(x + cr, y + ph); ctx.quadraticCurveTo(x, y + ph, x, y + ph - cr);
+          ctx.lineTo(x, y + cr); ctx.quadraticCurveTo(x, y, x + cr, y);
+          ctx.closePath(); ctx.clip();
+        }
+
+        ctx.drawImage(img, x, y, pw, ph);
         ctx.restore();
+
+        // Draw photo border/deco on top
+        currentFrame.drawPhotoFrame(ctx, x, y, pw, ph);
 
         loaded++;
         if (loaded === 4) {
-          // Footer text
-          ctx.fillStyle = '#e8446a';
-          ctx.font = 'bold 16px Poppins,sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(`💖 ${coupleNamesRef.current || 'BLUUU V3'}`, W / 2, H - 30);
-          ctx.font = '11px Poppins,sans-serif';
-          ctx.fillStyle = '#a38890';
-          ctx.fillText(
-            new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }),
-            W / 2, H - 12
-          );
+          // Draw footer
+          currentFrame.drawFooter(ctx, W, H, coupleNamesRef.current || 'Kita');
+
           const finalUrl = canvas.toDataURL('image/jpeg', 0.95);
           setStrip(finalUrl);
           if (roomCode) uploadPhoto(finalUrl);
@@ -420,20 +648,27 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
           )}
         </div>
 
-        {/* Frames */}
+        {/* Strip Templates */}
         <div>
-          <div style={labelStyle}>Frame</div>
-          <div style={{ display: 'flex', gap: 6, overflowX: 'auto', paddingBottom: 4 }}>
+          <div style={labelStyle}>Strip Template</div>
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6 }}>
             {FRAMES.map(f => (
               <button key={f.id} onClick={() => setFrame(f)} style={{
-                flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5,
-                padding: '8px 12px', borderRadius: 14,
+                flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
+                padding: '10px 14px', borderRadius: 16,
                 border: `1.5px solid ${frame.id === f.id ? 'var(--accent)' : 'rgba(255,255,255,0.45)'}`,
-                background: frame.id === f.id ? 'rgba(232,68,106,0.08)' : 'rgba(255,255,255,0.25)',
+                background: frame.id === f.id ? 'rgba(232,68,106,0.06)' : 'rgba(255,255,255,0.25)',
                 cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.25s',
               }}>
-                <span style={{ fontSize: 20 }}>{f.emoji}</span>
-                <span style={{ fontSize: 10, fontWeight: 700, color: frame.id === f.id ? 'var(--accent-dark)' : 'var(--text-tertiary)' }}>{f.name}</span>
+                <div style={{
+                  width: 22, height: 22, borderRadius: 6,
+                  background: f.preview,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, border: '1px solid rgba(0,0,0,0.08)'
+                }}>
+                  {f.emoji}
+                </div>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: frame.id === f.id ? 'var(--accent-dark)' : 'var(--text-primary)' }}>{f.name}</span>
               </button>
             ))}
           </div>

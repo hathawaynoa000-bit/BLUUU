@@ -36,20 +36,19 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   };
 
   const startCamera = async () => {
-    // Try video+audio, fall back to video-only
-    for (const constraints of [
-      { video: { width: 640, height: 480, facingMode: 'user' }, audio: true },
-      { video: { width: 640, height: 480, facingMode: 'user' }, audio: false },
-    ]) {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        localStreamRef.current = stream;
-        setLocalStream(stream);
-        return stream;
-      } catch (_) { /* try next */ }
+    // Video only — no microphone needed for photobooth
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 640, height: 480, facingMode: 'user' },
+        audio: false,
+      });
+      localStreamRef.current = stream;
+      setLocalStream(stream);
+      return stream;
+    } catch (_) {
+      setErrorMsg('Gagal mengakses kamera. Pastikan izin browser diberikan.');
+      return null;
     }
-    setErrorMsg('Gagal mengakses kamera. Pastikan izin browser diberikan.');
-    return null;
   };
 
   // ─── Mode change effects ───────────────────────────────────────────────────

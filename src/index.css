@@ -47,6 +47,8 @@
 html {
   scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
+  /* Same bg as body so no white shows when user zooms out */
+  background: linear-gradient(135deg, #fff0f3 0%, #ffe3e8 40%, #ffd0da 75%, #ffb8c7 100%);
 }
 
 body {
@@ -592,6 +594,11 @@ body::before {
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 16px;
   align-items: start;
+  min-width: 0;
+}
+.app-workspace > * {
+  min-width: 0; /* Prevent grid children from overflowing their track */
+  max-width: 100%;
 }
 
 @media (max-width: 820px) {
@@ -680,19 +687,23 @@ body::before {
     width: 100%;
   }
 
-  /* Camera previews: portrait-friendly aspect ratio on mobile */
+  /* Camera preview: fixed compact height so controls stay visible */
   .video-viewport {
-    aspect-ratio: 3/4;
+    aspect-ratio: auto;
+    height: 200px;
+  }
+  .video-viewport video {
+    object-fit: cover;
+    object-position: center top; /* show face/upper body, not just forehead */
   }
 
-  /* Camera Video Grid — side-by-side with portrait ratio */
+  /* Two cams side-by-side: slightly taller for better view */
   .video-grid.two-cols {
     grid-template-columns: 1fr 1fr;
     gap: 6px;
   }
-  /* When two cams side by side on mobile, use square aspect */
   .video-grid.two-cols .video-viewport {
-    aspect-ratio: 1/1;
+    height: 180px;
   }
 
   /* Header Padding */

@@ -338,6 +338,8 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const [captures, setCaptures] = useState([]);
   const [countdown, setCountdown] = useState(null);
   const [shooting,  setShooting]  = useState(false);
+  const [mirrorLocal, setMirrorLocal] = useState(true);
+  const [mirrorRemote, setMirrorRemote] = useState(false);
   const [strip,     setStrip]     = useState(null);
   const [preview,   setPreview]   = useState(null);
   const [coupleNames, setCoupleNames] = useState('Kita');
@@ -625,24 +627,40 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
 
         {/* Video feeds */}
         <div style={{ display: 'grid', gridTemplateColumns: remoteStream ? '1fr 1fr' : '1fr', gap: 10 }}>
-          <div className="video-viewport">
+          <div className="video-viewport" style={{ position: 'relative' }}>
             <video
               ref={localVideoRef}
               muted
               autoPlay
               playsInline
-              style={{ filter: filter.css || undefined, transform: 'scaleX(-1)' }}
+              style={{ filter: filter.css || undefined, transform: mirrorLocal ? 'scaleX(-1)' : 'none' }}
             />
+            <button
+              type="button"
+              className="mirror-toggle-btn"
+              onClick={() => setMirrorLocal(p => !p)}
+              title="Balik Kiri/Kanan"
+            >
+              ↔️
+            </button>
             <div className="video-tag"><div className="dot dot-green" /> Kamu</div>
           </div>
           {remoteStream && (
-            <div className="video-viewport">
+            <div className="video-viewport" style={{ position: 'relative' }}>
               <video
                 ref={remoteVideoRef}
                 autoPlay
                 playsInline
-                style={{ filter: filter.css || undefined }}
+                style={{ filter: filter.css || undefined, transform: mirrorRemote ? 'scaleX(-1)' : 'none' }}
               />
+              <button
+                type="button"
+                className="mirror-toggle-btn"
+                onClick={() => setMirrorRemote(p => !p)}
+                title="Balik Kiri/Kanan"
+              >
+                ↔️
+              </button>
               <div className="video-tag"><div className="dot dot-pink" /> Pasangan</div>
             </div>
           )}

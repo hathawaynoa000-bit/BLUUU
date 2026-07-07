@@ -161,7 +161,7 @@ export default function App() {
               onDataReceived={handleDataReceived}
             />
             
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1.4fr) minmax(0,1fr)', gap: 16, alignItems: 'start' }}>
+            <div className="app-workspace">
               <Photobooth
                 connectionData={connectionData}
                 syncShutterState={syncShutterState}

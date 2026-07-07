@@ -582,3 +582,48 @@ body::before {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.15); }
+
+/* Responsive Workspace Layout */
+.app-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 820px) {
+  .app-workspace {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}
+
+/* Mirror Toggle Button Overlay */
+.mirror-toggle-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 10;
+}
+.mirror-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.6);
+  transform: scale(1.08);
+}
+.mirror-toggle-btn:active {
+  transform: scale(0.92);
+}
+

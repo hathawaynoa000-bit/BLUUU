@@ -481,14 +481,14 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     canvas.height = CAPTURE_H;
     const ctx = canvas.getContext('2d');
 
-    // Apply filter
-    if (currentFilter.css) ctx.filter = currentFilter.css;
-
     // Center-crop draw helper: fills destRect from videoEl without stretching
+    // filterCss is applied inside so ctx.restore() never wipes it
     const vr = remoteStream ? remoteVideoRef.current : null;
+    const filterCss = currentFilter.css || 'none';
 
     const drawFeed = (videoEl, destX, destY, destW, destH, mirror) => {
       ctx.save();
+      ctx.filter = filterCss; // apply filter INSIDE save so restore doesn't lose it
       ctx.beginPath();
       ctx.rect(destX, destY, destW, destH);
       ctx.clip();
@@ -521,7 +521,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
 
     if (vr) {
       // Side-by-side: Local (mirrored) on left, Remote on right
-      drawFeed(v,  0,           0, CAPTURE_W / 2, CAPTURE_H, mirrorLocal);
+      drawFeed(v,  0,             0, CAPTURE_W / 2, CAPTURE_H, mirrorLocal);
       drawFeed(vr, CAPTURE_W / 2, 0, CAPTURE_W / 2, CAPTURE_H, mirrorRemote);
     } else {
       // Solo / local: full width

@@ -472,18 +472,19 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     const v = localVideoRef.current;
     if (!v) return;
 
-    const W = v.videoWidth  > 0 ? v.videoWidth  : 640;
-    const H = v.videoHeight > 0 ? v.videoHeight : 480;
+    // Always use landscape 4:3 canvas to prevent portrait stretch in final strip
+    const CAPTURE_W = 640;
+    const CAPTURE_H = 480;
 
     const canvas = document.createElement('canvas');
-    canvas.width  = W;
-    canvas.height = H;
+    canvas.width  = CAPTURE_W;
+    canvas.height = CAPTURE_H;
     const ctx = canvas.getContext('2d');
 
     // Apply filter
     if (currentFilter.css) ctx.filter = currentFilter.css;
 
-    // Draw feeds helper
+    // Center-crop draw helper: fills destRect from videoEl without stretching
     const vr = remoteStream ? remoteVideoRef.current : null;
 
     const drawFeed = (videoEl, destX, destY, destW, destH, mirror) => {
@@ -492,18 +493,20 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
       ctx.rect(destX, destY, destW, destH);
       ctx.clip();
 
-      const videoW = videoEl.videoWidth > 0 ? videoEl.videoWidth : 640;
+      const videoW = videoEl.videoWidth  > 0 ? videoEl.videoWidth  : 640;
       const videoH = videoEl.videoHeight > 0 ? videoEl.videoHeight : 480;
       const videoAspect = videoW / videoH;
       const targetAspect = destW / destH;
 
       let sx = 0, sy = 0, sw = videoW, sh = videoH;
       if (videoAspect > targetAspect) {
-        sw = videoH * targetAspect;
-        sx = (videoW - sw) / 2;
+        // video wider than target: crop left & right
+        sw = Math.round(videoH * targetAspect);
+        sx = Math.round((videoW - sw) / 2);
       } else {
-        sh = videoW / targetAspect;
-        sy = (videoH - sh) / 2;
+        // video taller than target: crop top & bottom
+        sh = Math.round(videoW / targetAspect);
+        sy = Math.round((videoH - sh) / 2);
       }
 
       if (mirror) {
@@ -517,19 +520,17 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     };
 
     if (vr) {
-      // Draw side-by-side: Local on left, Remote on right
-      drawFeed(v, 0, 0, W / 2, H, mirrorLocal);
-      drawFeed(vr, W / 2, 0, W / 2, H, mirrorRemote);
+      // Side-by-side: Local (mirrored) on left, Remote on right
+      drawFeed(v,  0,           0, CAPTURE_W / 2, CAPTURE_H, mirrorLocal);
+      drawFeed(vr, CAPTURE_W / 2, 0, CAPTURE_W / 2, CAPTURE_H, mirrorRemote);
     } else {
-      // Draw full width solo
-      drawFeed(v, 0, 0, W, H, mirrorLocal);
+      // Solo / local: full width
+      drawFeed(v, 0, 0, CAPTURE_W, CAPTURE_H, mirrorLocal);
     }
 
     ctx.filter = 'none';
 
-    // Note: Frames are no longer drawn directly on the raw capture; 
-    // instead they are generated dynamically during strip layout compilation!
-
+    // Note: Frames are drawn during strip layout compilation, not here
     const src  = canvas.toDataURL('image/jpeg', 0.92);
     const next = [...currentCaptures, { src, frame: currentFrame.name, filter: currentFilter.name }].slice(-4);
     capturesRef.current = next;

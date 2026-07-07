@@ -310,10 +310,10 @@ app.delete('/api/admin/photos/:id', authenticateAdmin, async (req, res) => {
 });
 
 // ─── Catch-all 404 for unknown API routes ───────────────────────────────────
-app.all('/api/*', (req, res) => {
+app.use('/api', (req, res) => {
   res.status(404).json({
     status: 'not_found',
-    message: `Route ${req.method} ${req.path} tidak ditemukan.`,
+    message: `Route ${req.method} ${req.originalUrl} tidak ditemukan.`,
     hint: 'Pastikan endpoint sudah benar. Cek /api/health untuk status server.',
   });
 });

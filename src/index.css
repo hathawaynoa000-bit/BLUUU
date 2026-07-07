@@ -690,11 +690,11 @@ body::before {
   /* Camera preview: fixed compact height so controls stay visible */
   .video-viewport {
     aspect-ratio: auto;
-    height: 200px;
+    height: 400px;
   }
   .video-viewport video {
     object-fit: cover;
-    object-position: center top; /* show face/upper body, not just forehead */
+    object-position: 50% 15%; /* shift crop upward to show face clearly */
   }
 
   /* Two cams side-by-side: slightly taller for better view */

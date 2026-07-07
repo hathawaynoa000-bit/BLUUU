@@ -23,6 +23,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   const connRef      = useRef(null);
   const localStreamRef = useRef(null);
   const pollRef      = useRef(null);
+  const keepaliveRef = useRef(null);
 
   const [localStream,  setLocalStream]  = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
@@ -71,6 +72,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       stopCamera();
       peerRef.current?.destroy();
       clearInterval(pollRef.current);
+      clearInterval(keepaliveRef.current);
     };
   }, [mode]);
 
@@ -89,14 +91,34 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   // ─── sendData helper (stable ref) ─────────────────────────────────────────
   const sendData = (data) => connRef.current?.open ? (connRef.current.send(data), true) : false;
 
+  // ─── Keepalive ping to prevent NAT/firewall dropping idle connections ──────
+  const startKeepalive = () => {
+    if (keepaliveRef.current) clearInterval(keepaliveRef.current);
+    keepaliveRef.current = setInterval(() => {
+      if (connRef.current?.open) {
+        try { connRef.current.send({ type: 'PING' }); } catch (_) {}
+      }
+    }, 20000); // ping every 20 seconds
+  };
+
   // ─── Data channel setup ───────────────────────────────────────────────────
   const setupDataChannel = (conn) => {
     connRef.current = conn;
-    conn.on('data', d => onDataReceived?.(d));
+    conn.on('data', d => {
+      if (d?.type === 'PING') return; // ignore keepalive pings
+      onDataReceived?.(d);
+    });
+    conn.on('open', () => {
+      startKeepalive();
+    });
     conn.on('close', () => {
       setConnState('disconnected');
       setRemoteStream(null);
       connRef.current = null;
+      if (keepaliveRef.current) { clearInterval(keepaliveRef.current); keepaliveRef.current = null; }
+    });
+    conn.on('error', (e) => {
+      console.warn('[DataChannel] error:', e);
     });
   };
 
@@ -131,7 +153,13 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
         iceServers: [
           { urls: 'stun:stun.l.google.com:19302' },
           { urls: 'stun:stun1.l.google.com:19302' },
+          { urls: 'stun:stun2.l.google.com:19302' },
+          { urls: 'stun:stun3.l.google.com:19302' },
+          { urls: 'stun:stun4.l.google.com:19302' },
+          { urls: 'stun:global.stun.twilio.com:3478' },
+          { urls: 'stun:stun.cloudflare.com:3478' },
         ],
+        iceTransportPolicy: 'all',
       },
     });
     peerRef.current = peer;

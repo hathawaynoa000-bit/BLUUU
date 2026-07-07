@@ -694,7 +694,7 @@ body::before {
   }
   .video-viewport video {
     object-fit: cover;
-    object-position: 50% 15%; /* shift crop upward to show face clearly */
+    object-position: 50% 50%; /* center crop matches doCapture's center-crop math */
   }
 
   /* Two cams side-by-side: slightly taller for better view */

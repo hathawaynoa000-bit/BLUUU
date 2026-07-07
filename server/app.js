@@ -459,6 +459,61 @@ app.post('/api/admin/content/seed', authenticateAdmin, async (_req, res) => {
   }
 });
 
+// ─── Custom Frames (Public) ─────────────────────────────────────────────────
+app.get('/api/frames', async (_req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, emoji, image_data FROM custom_frames ORDER BY id DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fetch Custom Frames Error:', err);
+    res.status(500).json({ message: 'Gagal memuat frame kustom.' });
+  }
+});
+
+// ─── Custom Frames Admin ────────────────────────────────────────────────────
+app.get('/api/admin/frames', authenticateAdmin, async (_req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, name, emoji, created_at, length(image_data) as size FROM custom_frames ORDER BY id DESC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Admin Fetch Custom Frames Error:', err);
+    res.status(500).json({ message: 'Gagal memuat list frame.' });
+  }
+});
+
+app.post('/api/admin/frames', authenticateAdmin, async (req, res) => {
+  const { name, emoji, image_data } = req.body;
+  if (!name || !image_data) {
+    return res.status(400).json({ message: 'Nama frame dan image_data (base64) harus diisi.' });
+  }
+  try {
+    const result = await pool.query(
+      'INSERT INTO custom_frames (name, emoji, image_data) VALUES ($1, $2, $3) RETURNING id, name, emoji',
+      [name.trim(), emoji || '🖼️', image_data]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin Create Custom Frame Error:', err);
+    res.status(500).json({ message: 'Gagal mengunggah frame kustom.' });
+  }
+});
+
+app.delete('/api/admin/frames/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM custom_frames WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Frame tidak ditemukan.' });
+    res.json({ message: 'Frame kustom berhasil dihapus.' });
+  } catch (err) {
+    console.error('Admin Delete Custom Frame Error:', err);
+    res.status(500).json({ message: 'Gagal menghapus frame kustom.' });
+  }
+});
+
 // ─── Catch-all 404 for unknown API routes ───────────────────────────────────
 app.use('/api', (req, res) => {
   res.status(404).json({

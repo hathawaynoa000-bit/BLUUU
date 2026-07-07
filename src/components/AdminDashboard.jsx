@@ -89,6 +89,7 @@ export default function AdminDashboard() {
   const [rooms, setRooms] = useState([]);
   const [photos, setPhotos] = useState([]);
   const [content, setContent] = useState([]);
+  const [customFrames, setCustomFrames] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(null);
@@ -104,23 +105,31 @@ export default function AdminDashboard() {
   const [inputText, setInputText] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Custom Frames States
+  const [frameName, setFrameName] = useState('');
+  const [frameEmoji, setFrameEmoji] = useState('🖼️');
+  const [frameFileBase64, setFrameFileBase64] = useState('');
+  const [deletingFrame, setDeletingFrame] = useState(null);
+
   const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` };
 
   const fetchAll = async () => {
     if (!token) return;
     setLoading(true); setError('');
     try {
-      const [sr, rr, pr, cr] = await Promise.all([
+      const [sr, rr, pr, cr, fr] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }),
         fetch(`${API}/admin/rooms`, { headers }),
         fetch(`${API}/admin/photos`, { headers }),
         fetch(`${API}/admin/content`, { headers }),
+        fetch(`${API}/admin/frames`, { headers }),
       ]);
-      if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401) { logout(); return; }
+      if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401 || fr.status === 401) { logout(); return; }
       setStats(await sr.json());
       setRooms(await rr.json());
       setPhotos(await pr.json());
       setContent(await cr.json());
+      setCustomFrames(await fr.json());
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -143,6 +152,48 @@ export default function AdminDashboard() {
       setPhotos(prev => prev.filter(ph => ph.id !== id));
       setDeletingPhoto(null);
     } catch (e) { setError(e.message); }
+  };
+
+  // Custom Frame Actions
+  const handleUploadFrame = async (e) => {
+    e.preventDefault();
+    if (!frameName.trim() || !frameFileBase64) {
+      alert('Nama frame dan file gambar PNG transparan harus dipilih!');
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const r = await fetch(`${API}/admin/frames`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          name: frameName,
+          emoji: frameEmoji,
+          image_data: frameFileBase64
+        })
+      });
+      const d = await r.json();
+      if (!r.ok) throw new Error(d.message || 'Gagal mengunggah frame kustom');
+      
+      setFrameName('');
+      setFrameEmoji('🖼️');
+      setFrameFileBase64('');
+      // Reset file input element manually if exists
+      const fileInput = document.getElementById('frame-file-input');
+      if (fileInput) fileInput.value = '';
+      
+      await fetchAll();
+    } catch (err) { setError(err.message); }
+    finally { setActionLoading(false); }
+  };
+
+  const handleDeleteFrame = async (id) => {
+    try {
+      const r = await fetch(`${API}/admin/frames/${id}`, { method: 'DELETE', headers });
+      if (!r.ok) throw new Error('Gagal menghapus frame kustom');
+      setCustomFrames(prev => prev.filter(f => f.id !== id));
+      setDeletingFrame(null);
+    } catch (err) { setError(err.message); }
   };
 
   // Game Content Actions
@@ -234,9 +285,9 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="seg-control">
-        {['overview', 'rooms', 'photos', 'games'].map(t => (
+        {['overview', 'rooms', 'photos', 'games', 'frames'].map(t => (
           <button key={t} onClick={() => setTab(t)} className={`seg-btn${tab === t ? ' active' : ''}`}>
-            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Room' : t === 'photos' ? '📸 Foto Gallery' : '🎮 Konten Game'}
+            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Room' : t === 'photos' ? '📸 Foto' : t === 'games' ? '🎮 Game CMS' : '🖼️ Frame Kustom'}
           </button>
         ))}
       </div>
@@ -466,6 +517,177 @@ export default function AdminDashboard() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Custom Frames Tab */}
+      {tab === 'frames' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 16 }}>
+            {/* Upload form */}
+            <div className="glass" style={{ padding: '20px 22px' }}>
+              <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
+                🖼️ Upload Frame Baru
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--text-tertiary)', display: 'block', marginBottom: 16 }}>
+                Format wajib: PNG transparan dengan lubang pas
+              </span>
+
+              <form onSubmit={handleUploadFrame} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>Nama Frame</label>
+                  <input
+                    className="field"
+                    placeholder="Contoh: Frame Valentine"
+                    value={frameName}
+                    onChange={e => setFrameName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Emoji Icon</label>
+                  <input
+                    className="field"
+                    placeholder="Contoh: 🌸"
+                    value={frameEmoji}
+                    onChange={e => setFrameEmoji(e.target.value)}
+                    maxLength={5}
+                    required
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>File Gambar PNG (Transparan)</label>
+                  <input
+                    type="file"
+                    id="frame-file-input"
+                    accept="image/png"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (!file) return;
+                      if (file.type !== 'image/png') {
+                        alert('Format file wajib .PNG transparan!');
+                        e.target.value = '';
+                        return;
+                      }
+                      // check size limit
+                      if (file.size > 2.5 * 1024 * 1024) {
+                        alert('Ukuran file terlalu besar! Silakan kompres PNG Anda di bawah 2.5 MB agar tidak error.');
+                        e.target.value = '';
+                        return;
+                      }
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setFrameFileBase64(reader.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                    style={{
+                      display: 'block', width: '100%', fontSize: 12, padding: '10px 0',
+                      color: 'var(--text-secondary)'
+                    }}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-accent btn-sm" style={{ marginTop: 6 }} disabled={actionLoading}>
+                  {actionLoading ? 'Mengunggah...' : '🚀 Unggah Frame'}
+                </button>
+              </form>
+            </div>
+
+            {/* Design guides */}
+            <div className="glass" style={{ padding: '20px 22px', background: 'rgba(255,255,255,0.3)' }}>
+              <span style={{ fontWeight: 800, fontSize: 15, color: 'var(--text-primary)', display: 'block', marginBottom: 4 }}>
+                📐 Panduan Desain Frame HD
+              </span>
+              <span style={{ fontSize: 11.5, color: 'var(--text-secondary)', display: 'block', marginBottom: 12 }}>
+                Agar foto jepretan pasangan pas berada di lubang transparan frame Anda, buatlah desain dengan panduan berikut:
+              </span>
+
+              <div style={{ fontSize: 11.5, lineHeight: 1.6, color: 'var(--text-primary)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div>• Ukuran Canvas Utama: <code style={{ fontWeight: 700 }}>1050 x 3275 px</code></div>
+                <div>• Format File: <code style={{ fontWeight: 700 }}>.PNG (Transparent)</code></div>
+                <div>• Ukuran tiap Lubang Foto: <code style={{ fontWeight: 700 }}>950 x 712 px</code></div>
+                <div>• Koordinat Lubang Foto (X: 50 px dari kiri):</div>
+                <div style={{ paddingLeft: 12, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <div>- Lubang 1 Y: <code style={{ fontWeight: 700 }}>200 px</code></div>
+                  <div>- Lubang 2 Y: <code style={{ fontWeight: 700 }}>937 px</code></div>
+                  <div>- Lubang 3 Y: <code style={{ fontWeight: 700 }}>1674 px</code></div>
+                  <div>- Lubang 4 Y: <code style={{ fontWeight: 700 }}>2411 px</code></div>
+                </div>
+                <div style={{ marginTop: 6, padding: '8px 10px', background: 'rgba(232,68,106,0.06)', borderRadius: 8, fontSize: 10.5, color: 'var(--accent-dark)', border: '1px solid rgba(232,68,106,0.1)' }}>
+                  💡 <strong>Tips:</strong> Buatlah background transparan pada area koordinat tersebut di Photoshop/Canva sebelum mengunggah.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Frame List Table */}
+          <div className="glass" style={{ padding: 0, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+              <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Daftar Frame Kustom ({customFrames.length})</span>
+            </div>
+
+            {customFrames.length === 0 ? (
+              <div style={{ padding: '44px 24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
+                <div style={{ fontSize: 36, marginBottom: 10 }}>🖼️</div>
+                Belum ada frame kustom diunggah.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th style={{ width: 60 }}>Icon</th>
+                      <th>Nama Frame</th>
+                      <th>Ukuran File</th>
+                      <th>Dibuat</th>
+                      <th style={{ textAlign: 'right', width: 120 }}>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {customFrames.map(f => (
+                      <tr key={f.id}>
+                        <td style={{ fontSize: 20, textAlign: 'center' }}>{f.emoji}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--text-primary)' }}>{f.name}</td>
+                        <td style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
+                          {f.size ? `${(f.size / 1024).toFixed(0)} KB` : '—'}
+                        </td>
+                        <td style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                          {f.created_at ? new Date(f.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <button
+                            className="btn btn-outline btn-sm"
+                            onClick={() => setDeletingFrame(f.id)}
+                            style={{ borderColor: 'rgba(255,59,48,0.25)', color: '#b71c1c' }}
+                          >
+                            🗑 Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Custom Frame Modal */}
+      {deletingFrame && (
+        <div className="overlay" onClick={() => setDeletingFrame(null)}>
+          <div className="panel" style={{ maxWidth: 340 }} onClick={e => e.stopPropagation()}>
+            <div style={{ textAlign: 'center', marginBottom: 20 }}>
+              <div style={{ fontSize: 44, marginBottom: 10 }}>🗑️</div>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Hapus Frame Kustom?</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Frame ini akan dihapus permanen dan tidak bisa dipilih lagi.</p>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-glass" style={{ flex: 1 }} onClick={() => setDeletingFrame(null)}>Batal</button>
+              <button className="btn btn-accent" style={{ flex: 1, background: 'linear-gradient(180deg, #ff6b6b, #dc2626)', boxShadow: '0 6px 20px rgba(220,38,38,0.3)' }} onClick={() => handleDeleteFrame(deletingFrame)}>Hapus</button>
+            </div>
+          </div>
         </div>
       )}
 

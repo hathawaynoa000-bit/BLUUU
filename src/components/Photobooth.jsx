@@ -19,25 +19,25 @@ const FRAMES = [
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.lineWidth = 6;
+      ctx.lineWidth = Math.round(6 * scale);
       ctx.strokeRect(x, y, pw, ph);
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#e8446a';
-      ctx.font = 'bold 18px Poppins, sans-serif';
+      ctx.font = `bold ${Math.round(18 * scale)}px Poppins, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`💗  ${coupleName.toUpperCase()}  💗`, w / 2, 42);
+      ctx.fillText(`💗  ${coupleName.toUpperCase()}  💗`, w / 2, Math.round(42 * scale));
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#e8446a';
-      ctx.font = 'bold 13px Poppins, sans-serif';
+      ctx.font = `bold ${Math.round(13 * scale)}px Poppins, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`BLUUU V3`, w / 2, h - 34);
-      ctx.font = '10px Poppins, sans-serif';
+      ctx.fillText(`BLUUU V3`, w / 2, h - Math.round(34 * scale));
+      ctx.font = `${Math.round(10 * scale)}px Poppins, sans-serif`;
       ctx.fillStyle = '#a38890';
-      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - 16);
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - Math.round(16 * scale));
     }
   },
   {
@@ -53,22 +53,22 @@ const FRAMES = [
       ctx.fillStyle = '#121212';
       ctx.fillRect(0, 0, w, h);
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = Math.round(2 * scale);
       ctx.strokeRect(x, y, pw, ph);
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#ffffff';
-      ctx.font = '600 12px Poppins, sans-serif';
+      ctx.font = `600 ${Math.round(12 * scale)}px Poppins, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`M O M E N T S  ·  ${coupleName.toUpperCase()}`, w / 2, 34);
+      ctx.fillText(`M O M E N T S  ·  ${coupleName.toUpperCase()}`, w / 2, Math.round(34 * scale));
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#888888';
-      ctx.font = '9px Poppins, sans-serif';
+      ctx.font = `${Math.round(9 * scale)}px Poppins, sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase(), w / 2, h - 22);
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase(), w / 2, h - Math.round(22 * scale));
     }
   },
   {
@@ -80,73 +80,75 @@ const FRAMES = [
     getFooterHeight: () => 60,
     getPadding: () => ({ top: 15, bottom: 15, left: 20, right: 20 }),
     getGap: () => 12,
-    drawBg: (ctx, w, h) => {
+    drawBg: (ctx, w, h, scale = 1) => {
       ctx.fillStyle = '#f4ecd8';
       ctx.fillRect(0, 0, w, h);
       ctx.strokeStyle = 'rgba(0,0,0,0.06)';
-      ctx.lineWidth = 1;
-      for (let i = 40; i < h; i += 40) {
+      ctx.lineWidth = Math.round(1 * scale);
+      const step = Math.round(40 * scale);
+      for (let i = step; i < h; i += step) {
         ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(w, i); ctx.stroke();
       }
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.strokeStyle = '#222';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = Math.round(2 * scale);
       ctx.strokeRect(x, y, pw, ph);
       ctx.strokeStyle = '#222';
-      ctx.lineWidth = 0.5;
-      ctx.strokeRect(x - 4, y - 4, pw + 8, ph + 8);
+      ctx.lineWidth = Math.round(0.5 * scale);
+      ctx.strokeRect(x - Math.round(4 * scale), y - Math.round(4 * scale), pw + Math.round(8 * scale), ph + Math.round(8 * scale));
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#111';
       ctx.textAlign = 'center';
-      ctx.font = '900 24px Georgia, serif';
-      ctx.fillText(coupleName.toUpperCase(), w / 2, 42);
+      ctx.font = `900 ${Math.round(24 * scale)}px Georgia, serif`;
+      ctx.fillText(coupleName.toUpperCase(), w / 2, Math.round(42 * scale));
       
       ctx.strokeStyle = '#111';
-      ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(15, 54); ctx.lineTo(w - 15, 54); ctx.stroke();
-      ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.moveTo(15, 58); ctx.lineTo(w - 15, 58); ctx.stroke();
+      ctx.lineWidth = Math.round(2 * scale);
+      ctx.beginPath(); ctx.moveTo(Math.round(15 * scale), Math.round(54 * scale)); ctx.lineTo(w - Math.round(15 * scale), Math.round(54 * scale)); ctx.stroke();
+      ctx.lineWidth = Math.round(0.8 * scale);
+      ctx.beginPath(); ctx.moveTo(Math.round(15 * scale), Math.round(58 * scale)); ctx.lineTo(w - Math.round(15 * scale), Math.round(58 * scale)); ctx.stroke();
       
       ctx.fillStyle = '#333';
-      ctx.font = '800 9px sans-serif';
+      ctx.font = `800 ${Math.round(9 * scale)}px sans-serif`;
       ctx.textAlign = 'left';
-      ctx.fillText('EDISI SPESIAL', 20, 72);
+      ctx.fillText('EDISI SPESIAL', Math.round(20 * scale), Math.round(72 * scale));
       
       ctx.textAlign = 'right';
-      ctx.fillText(new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase(), w - 20, 72);
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).toUpperCase(), w - Math.round(20 * scale), Math.round(72 * scale));
       
       ctx.textAlign = 'center';
-      ctx.font = 'italic 10px Georgia, serif';
-      ctx.fillText('“Love story continues, beautiful person coming soon!”', w / 2, 92);
+      ctx.font = `italic ${Math.round(10 * scale)}px Georgia, serif`;
+      ctx.fillText('“Love story continues, beautiful person coming soon!”', w / 2, Math.round(92 * scale));
       
       ctx.strokeStyle = '#111';
-      ctx.lineWidth = 0.8;
-      ctx.beginPath(); ctx.moveTo(15, 102); ctx.lineTo(w - 15, 102); ctx.stroke();
+      ctx.lineWidth = Math.round(0.8 * scale);
+      ctx.beginPath(); ctx.moveTo(Math.round(15 * scale), Math.round(102 * scale)); ctx.lineTo(w - Math.round(15 * scale), Math.round(102 * scale)); ctx.stroke();
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.strokeStyle = '#111';
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(15, h - 48); ctx.lineTo(w - 15, h - 48); ctx.stroke();
+      ctx.lineWidth = Math.round(1 * scale);
+      ctx.beginPath(); ctx.moveTo(Math.round(15 * scale), h - Math.round(48 * scale)); ctx.lineTo(w - Math.round(15 * scale), h - Math.round(48 * scale)); ctx.stroke();
       
       ctx.fillStyle = '#222';
-      ctx.font = 'bold 9px monospace';
+      ctx.font = `bold ${Math.round(9 * scale)}px monospace`;
       ctx.textAlign = 'left';
-      ctx.fillText('VOL. I  NO. 15', 20, h - 28);
+      ctx.fillText('VOL. I  NO. 15', Math.round(20 * scale), h - Math.round(28 * scale));
       
       ctx.textAlign = 'right';
-      ctx.fillText('BLUUU © 2026', w - 20, h - 28);
+      ctx.fillText('BLUUU © 2026', w - Math.round(20 * scale), h - Math.round(28 * scale));
       
       ctx.fillStyle = '#111';
-      ctx.fillRect(w / 2 - 20, h - 38, 3, 16);
-      ctx.fillRect(w / 2 - 14, h - 38, 2, 16);
-      ctx.fillRect(w / 2 - 10, h - 38, 4, 16);
-      ctx.fillRect(w / 2 - 4, h - 38, 1, 16);
-      ctx.fillRect(w / 2 - 1, h - 38, 3, 16);
-      ctx.fillRect(w / 2 + 4, h - 38, 2, 16);
-      ctx.fillRect(w / 2 + 8, h - 38, 4, 16);
-      ctx.fillRect(w / 2 + 14, h - 38, 1, 16);
+      const barW = Math.round(scale);
+      ctx.fillRect(w / 2 - Math.round(20 * scale), h - Math.round(38 * scale), 3 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 - Math.round(14 * scale), h - Math.round(38 * scale), 2 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 - Math.round(10 * scale), h - Math.round(38 * scale), 4 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 - Math.round(4 * scale), h - Math.round(38 * scale), 1 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 - Math.round(1 * scale), h - Math.round(38 * scale), 3 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 + Math.round(4 * scale), h - Math.round(38 * scale), 2 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 + Math.round(8 * scale), h - Math.round(38 * scale), 4 * barW, Math.round(16 * scale));
+      ctx.fillRect(w / 2 + Math.round(14 * scale), h - Math.round(38 * scale), 1 * barW, Math.round(16 * scale));
     }
   },
   {
@@ -158,15 +160,15 @@ const FRAMES = [
     getFooterHeight: () => 50,
     getPadding: () => ({ top: 10, bottom: 10, left: 45, right: 45 }),
     getGap: () => 14,
-    drawBg: (ctx, w, h) => {
+    drawBg: (ctx, w, h, scale = 1) => {
       ctx.fillStyle = '#1a1a1a';
       ctx.fillRect(0, 0, w, h);
       
       ctx.fillStyle = '#0a0a0a';
-      const holeW = 14;
-      const holeH = 22;
-      const step = 44;
-      const r = 3;
+      const holeW = Math.round(14 * scale);
+      const holeH = Math.round(22 * scale);
+      const step = Math.round(44 * scale);
+      const r = Math.round(3 * scale);
       
       const drawHole = (x, y) => {
         ctx.beginPath();
@@ -183,27 +185,27 @@ const FRAMES = [
         ctx.fill();
       };
 
-      for (let y = 15; y < h - 15; y += step) {
-        drawHole(15, y);
-        drawHole(w - 15 - holeW, y);
+      for (let y = Math.round(15 * scale); y < h - Math.round(15 * scale); y += step) {
+        drawHole(Math.round(15 * scale), y);
+        drawHole(w - Math.round(15 * scale) - holeW, y);
       }
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 8;
+      ctx.lineWidth = Math.round(8 * scale);
       ctx.strokeRect(x, y, pw, ph);
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#999999';
-      ctx.font = 'bold 11px monospace';
+      ctx.font = `bold ${Math.round(11 * scale)}px monospace`;
       ctx.textAlign = 'center';
-      ctx.fillText(`KODAK PORTRA 400  ·  ${coupleName.toUpperCase()}`, w / 2, 32);
+      ctx.fillText(`KODAK PORTRA 400  ·  ${coupleName.toUpperCase()}`, w / 2, Math.round(32 * scale));
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#999999';
-      ctx.font = 'bold 10px monospace';
+      ctx.font = `bold ${Math.round(10 * scale)}px monospace`;
       ctx.textAlign = 'center';
-      ctx.fillText(`SAFETY FILM  ·  ${new Date().getFullYear()}`, w / 2, h - 22);
+      ctx.fillText(`SAFETY FILM  ·  ${new Date().getFullYear()}`, w / 2, h - Math.round(22 * scale));
     }
   },
   {
@@ -219,33 +221,33 @@ const FRAMES = [
       ctx.fillStyle = '#090d16';
       ctx.fillRect(0, 0, w, h);
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.save();
       ctx.shadowColor = '#ff007f';
-      ctx.shadowBlur = 10;
+      ctx.shadowBlur = Math.round(10 * scale);
       ctx.strokeStyle = '#ff007f';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = Math.round(3 * scale);
       ctx.strokeRect(x, y, pw, ph);
       ctx.restore();
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.save();
       ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 8;
+      ctx.shadowBlur = Math.round(8 * scale);
       ctx.fillStyle = '#00ffff';
-      ctx.font = 'bold 18px sans-serif';
+      ctx.font = `bold ${Math.round(18 * scale)}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`⚡  ${coupleName.toUpperCase()}  ⚡`, w / 2, 40);
+      ctx.fillText(`⚡  ${coupleName.toUpperCase()}  ⚡`, w / 2, Math.round(40 * scale));
       ctx.restore();
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.save();
       ctx.shadowColor = '#ff007f';
-      ctx.shadowBlur = 6;
+      ctx.shadowBlur = Math.round(6 * scale);
       ctx.fillStyle = '#ff007f';
-      ctx.font = 'bold 12px sans-serif';
+      ctx.font = `bold ${Math.round(12 * scale)}px sans-serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(`NEON LIGHTS`, w / 2, h - 22);
+      ctx.fillText(`NEON LIGHTS`, w / 2, h - Math.round(22 * scale));
       ctx.restore();
     }
   },
@@ -258,43 +260,43 @@ const FRAMES = [
     getFooterHeight: () => 56,
     getPadding: () => ({ top: 15, bottom: 15, left: 20, right: 20 }),
     getGap: () => 8,
-    drawBg: (ctx, w, h) => {
+    drawBg: (ctx, w, h, scale = 1) => {
       const bg = ctx.createLinearGradient(0, 0, w, h);
       bg.addColorStop(0, '#e8d3b9');
       bg.addColorStop(1, '#cfae8b');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
       ctx.strokeStyle = '#8b5a2b';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(10, 10, w - 20, h - 20);
+      ctx.lineWidth = Math.round(1 * scale);
+      ctx.strokeRect(Math.round(10 * scale), Math.round(10 * scale), w - Math.round(20 * scale), h - Math.round(20 * scale));
     },
-    drawPhotoFrame: (ctx, x, y, pw, ph) => {
+    drawPhotoFrame: (ctx, x, y, pw, ph, scale = 1) => {
       ctx.strokeStyle = '#8b5a2b';
-      ctx.lineWidth = 3;
+      ctx.lineWidth = Math.round(3 * scale);
       ctx.strokeRect(x, y, pw, ph);
       
-      const size = 12;
+      const size = Math.round(12 * scale);
       ctx.fillStyle = '#8b5a2b';
-      ctx.fillRect(x - 2, y - 2, size, 2);
-      ctx.fillRect(x - 2, y - 2, 2, size);
-      ctx.fillRect(x + pw + 2 - size, y - 2, size, 2);
-      ctx.fillRect(x + pw, y - 2, 2, size);
-      ctx.fillRect(x - 2, y + ph, size, 2);
-      ctx.fillRect(x - 2, y + ph + 2 - size, 2, size);
-      ctx.fillRect(x + pw + 2 - size, y + ph, size, 2);
-      ctx.fillRect(x + pw, y + ph + 2 - size, 2, size);
+      ctx.fillRect(x - Math.round(2 * scale), y - Math.round(2 * scale), size, Math.round(2 * scale));
+      ctx.fillRect(x - Math.round(2 * scale), y - Math.round(2 * scale), Math.round(2 * scale), size);
+      ctx.fillRect(x + pw + Math.round(2 * scale) - size, y - Math.round(2 * scale), size, Math.round(2 * scale));
+      ctx.fillRect(x + pw, y - Math.round(2 * scale), Math.round(2 * scale), size);
+      ctx.fillRect(x - Math.round(2 * scale), y + ph, size, Math.round(2 * scale));
+      ctx.fillRect(x - Math.round(2 * scale), y + ph + Math.round(2 * scale) - size, Math.round(2 * scale), size);
+      ctx.fillRect(x + pw + Math.round(2 * scale) - size, y + ph, size, Math.round(2 * scale));
+      ctx.fillRect(x + pw, y + ph + Math.round(2 * scale) - size, Math.round(2 * scale), size);
     },
-    drawHeader: (ctx, w, h, coupleName) => {
+    drawHeader: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#5c3a21';
-      ctx.font = 'italic bold 20px Georgia, serif';
+      ctx.font = `italic bold ${Math.round(20 * scale)}px Georgia, serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(coupleName, w / 2, 45);
+      ctx.fillText(coupleName, w / 2, Math.round(45 * scale));
     },
-    drawFooter: (ctx, w, h, coupleName) => {
+    drawFooter: (ctx, w, h, coupleName, scale = 1) => {
       ctx.fillStyle = '#5c3a21';
-      ctx.font = '11px Georgia, serif';
+      ctx.font = `${Math.round(11 * scale)}px Georgia, serif`;
       ctx.textAlign = 'center';
-      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - 24);
+      ctx.fillText(new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }), w / 2, h - Math.round(24 * scale));
     }
   },
 ];
@@ -345,6 +347,19 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const [coupleNames, setCoupleNames] = useState('Kita');
   const [gallery,   setGallery]   = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [customFramesList, setCustomFramesList] = useState([]);
+
+  // Fetch custom frames from API on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API}/frames`);
+        if (res.ok) {
+          setCustomFramesList(await res.json());
+        }
+      } catch (_) {}
+    })();
+  }, []);
 
   // Keep mutable refs for use inside async countdown
   const frameRef       = useRef(FRAMES[0]);
@@ -487,68 +502,121 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   };
 
   const buildStrip = (shots) => {
-    const W = 420;
+    const W = 1050; // HD 2.5x Resolution width
     const currentFrame = frameRef.current;
+    const scale = 2.5; // 2.5x HD scale multiplier
 
-    const pad = currentFrame.getPadding();
-    const gap = currentFrame.getGap();
-    const headH = currentFrame.getHeaderHeight();
-    const footH = currentFrame.getFooterHeight();
+    if (currentFrame.isCustom) {
+      // 📐 CUSTOM PNG OVERLAY FRAME COMPILATION
+      const H = 3275;
+      const canvas = document.createElement('canvas');
+      canvas.width  = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
 
-    const pw = W - pad.left - pad.right;
-    const ph = Math.round(pw * 0.74); // 4:3 landscape ratio
+      // Clear/fill standard background first
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, W, H);
 
-    const H = pad.top + headH + (ph * 4) + (gap * 3) + footH + pad.bottom;
+      const px = 50;
+      const pw = 950;
+      const ph = 712;
+      const py = [200, 937, 1674, 2411];
 
-    const canvas = document.createElement('canvas');
-    canvas.width  = W;
-    canvas.height = H;
-    const ctx = canvas.getContext('2d');
+      let loaded = 0;
+      shots.forEach((s, i) => {
+        const img = new Image();
+        img.onload = () => {
+          ctx.drawImage(img, px, py[i], pw, ph);
+          loaded++;
 
-    // Draw background
-    currentFrame.drawBg(ctx, W, H);
+          if (loaded === 4) {
+            // Load custom frame overlay image
+            const frameImg = new Image();
+            frameImg.onload = () => {
+              ctx.drawImage(frameImg, 0, 0, W, H);
+              const finalUrl = canvas.toDataURL('image/jpeg', 0.95);
+              setStrip(finalUrl);
+              if (roomCode) uploadPhoto(finalUrl);
+            };
+            frameImg.src = currentFrame.imageData;
+          }
+        };
+        img.src = s.src;
+      });
+    } else {
+      // 📐 NATIVE DYNAMIC SCALED TEMPLATE COMPILATION (Classic Pink, Dark, etc.)
+      const pad = currentFrame.getPadding();
+      const gap = currentFrame.getGap();
+      const headH = currentFrame.getHeaderHeight();
+      const footH = currentFrame.getFooterHeight();
 
-    // Draw header
-    currentFrame.drawHeader(ctx, W, H, coupleNamesRef.current || 'Kita');
-
-    let loaded = 0;
-    shots.forEach((s, i) => {
-      const img = new Image();
-      img.onload = () => {
-        const y = pad.top + headH + i * (ph + gap);
-        const x = pad.left;
-
-        ctx.save();
-        // Clip with rounded corners (Classic Pink and Vintage templates only)
-        if (currentFrame.id === 'classic-pink' || currentFrame.id === 'vintage-brown') {
-          const cr = 8;
-          ctx.beginPath();
-          ctx.moveTo(x + cr, y); ctx.lineTo(x + pw - cr, y);
-          ctx.quadraticCurveTo(x + pw, y, x + pw, y + cr);
-          ctx.lineTo(x + pw, y + ph - cr); ctx.quadraticCurveTo(x + pw, y + ph, x + pw - cr, y + ph);
-          ctx.lineTo(x + cr, y + ph); ctx.quadraticCurveTo(x, y + ph, x, y + ph - cr);
-          ctx.lineTo(x, y + cr); ctx.quadraticCurveTo(x, y, x + cr, y);
-          ctx.closePath(); ctx.clip();
-        }
-
-        ctx.drawImage(img, x, y, pw, ph);
-        ctx.restore();
-
-        // Draw photo border/deco on top
-        currentFrame.drawPhotoFrame(ctx, x, y, pw, ph);
-
-        loaded++;
-        if (loaded === 4) {
-          // Draw footer
-          currentFrame.drawFooter(ctx, W, H, coupleNamesRef.current || 'Kita');
-
-          const finalUrl = canvas.toDataURL('image/jpeg', 0.95);
-          setStrip(finalUrl);
-          if (roomCode) uploadPhoto(finalUrl);
-        }
+      // Apply scale multiplier
+      const scaledPad = {
+        top: pad.top * scale,
+        bottom: pad.bottom * scale,
+        left: pad.left * scale,
+        right: pad.right * scale
       };
-      img.src = s.src;
-    });
+      const scaledGap = gap * scale;
+      const scaledHeadH = headH * scale;
+      const scaledFootH = footH * scale;
+
+      const pw = W - scaledPad.left - scaledPad.right;
+      const ph = Math.round(pw * 0.74); // 4:3 landscape ratio
+
+      const H = scaledPad.top + scaledHeadH + (ph * 4) + (scaledGap * 3) + scaledFootH + scaledPad.bottom;
+
+      const canvas = document.createElement('canvas');
+      canvas.width  = W;
+      canvas.height = H;
+      const ctx = canvas.getContext('2d');
+
+      // Draw background
+      currentFrame.drawBg(ctx, W, H, scale);
+
+      // Draw header
+      currentFrame.drawHeader(ctx, W, H, coupleNamesRef.current || 'Kita', scale);
+
+      let loaded = 0;
+      shots.forEach((s, i) => {
+        const img = new Image();
+        img.onload = () => {
+          const y = scaledPad.top + scaledHeadH + i * (ph + scaledGap);
+          const x = scaledPad.left;
+
+          ctx.save();
+          // Clip with rounded corners (Classic Pink and Vintage templates only)
+          if (currentFrame.id === 'classic-pink' || currentFrame.id === 'vintage-brown') {
+            const cr = 8 * scale;
+            ctx.beginPath();
+            ctx.moveTo(x + cr, y); ctx.lineTo(x + pw - cr, y);
+            ctx.quadraticCurveTo(x + pw, y, x + pw, y + cr);
+            ctx.lineTo(x + pw, y + ph - cr); ctx.quadraticCurveTo(x + pw, y + ph, x + pw - cr, y + ph);
+            ctx.lineTo(x + cr, y + ph); ctx.quadraticCurveTo(x, y + ph, x, y + ph - cr);
+            ctx.lineTo(x, y + cr); ctx.quadraticCurveTo(x, y, x + cr, y);
+            ctx.closePath(); ctx.clip();
+          }
+
+          ctx.drawImage(img, x, y, pw, ph);
+          ctx.restore();
+
+          // Draw photo border/deco on top
+          currentFrame.drawPhotoFrame(ctx, x, y, pw, ph, scale);
+
+          loaded++;
+          if (loaded === 4) {
+            // Draw footer
+            currentFrame.drawFooter(ctx, W, H, coupleNamesRef.current || 'Kita', scale);
+
+            const finalUrl = canvas.toDataURL('image/jpeg', 0.95);
+            setStrip(finalUrl);
+            if (roomCode) uploadPhoto(finalUrl);
+          }
+        };
+        img.src = s.src;
+      });
+    }
   };
 
   const uploadPhoto = async (photoData) => {
@@ -672,7 +740,17 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
         <div>
           <div style={labelStyle}>Strip Template</div>
           <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6 }}>
-            {FRAMES.map(f => (
+            {[
+              ...FRAMES,
+              ...customFramesList.map(cf => ({
+                id: `custom-${cf.id}`,
+                name: cf.name,
+                emoji: cf.emoji || '🖼️',
+                preview: 'rgba(255,255,255,0.45)',
+                isCustom: true,
+                imageData: cf.image_data
+              }))
+            ].map(f => (
               <button key={f.id} onClick={() => setFrame(f)} style={{
                 flexShrink: 0, display: 'flex', alignItems: 'center', gap: 8,
                 padding: '10px 14px', borderRadius: 16,

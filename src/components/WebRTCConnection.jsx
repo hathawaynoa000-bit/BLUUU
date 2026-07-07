@@ -268,10 +268,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
      ═══════════════════════════════════════════ */
   if (mode === CONNECTION_MODES.NONE) {
     return (
-      <div className="glass" style={{
-        maxWidth: 500, margin: '0 auto', padding: '36px 32px',
-        display: 'flex', flexDirection: 'column', gap: 24, alignItems: 'center', textAlign: 'center',
-      }}>
+      <div className="glass connection-card">
         <div>
           <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', marginBottom: 6 }}>
             Pilih Mode
@@ -279,7 +276,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
           <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Bagaimana Anda bermain bersama hari ini?</p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, width: '100%' }}>
+        <div className="mode-selector-grid">
           {/* Local */}
           <button onClick={() => setMode(CONNECTION_MODES.LOCAL)} className="glass" style={{
             padding: '24px 16px', cursor: 'pointer', display: 'flex', flexDirection: 'column',

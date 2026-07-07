@@ -683,3 +683,44 @@ body::before {
   }
 }
 
+/* Viewport constraints to prevent horizontal scroll zoom-out layout breakage */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
+}
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+/* Connection Mode Card */
+.connection-card {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 36px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+}
+
+.mode-selector-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .connection-card {
+    padding: 24px 16px;
+  }
+  .mode-selector-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

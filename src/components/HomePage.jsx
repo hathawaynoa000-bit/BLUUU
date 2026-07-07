@@ -111,13 +111,20 @@ export default function HomePage({ onStart }) {
         <p style={S.note}>Lanjutan dari BLU-2</p>
       </div>
 
-      {/* Footer link to admin */}
+      {/* Footer link to admin/about */}
       <div style={S.footerBar}>
         <span style={S.footerText}>© 2026 BLUUU V3 · Build for R💖</span>
-        <button onClick={() => {
-          window.history.pushState({}, '', '/admin');
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }} style={S.adminLink}>🔒 Admin</button>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <button onClick={() => {
+            window.history.pushState({}, '', '/about');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }} style={S.adminLink}>📖 About</button>
+          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 11 }}>·</span>
+          <button onClick={() => {
+            window.history.pushState({}, '', '/admin');
+            window.dispatchEvent(new PopStateEvent('popstate'));
+          }} style={S.adminLink}>🔒 Admin</button>
+        </div>
       </div>
 
       <style>{`

@@ -4,6 +4,7 @@ import WebRTCConnection, { CONNECTION_MODES } from './components/WebRTCConnectio
 import Photobooth from './components/Photobooth';
 import CoupleGames from './components/CoupleGames';
 import AdminDashboard from './components/AdminDashboard';
+import AboutPage from './components/AboutPage';
 
 /* ─── Simple client-side router ─── */
 function useRouter() {
@@ -66,6 +67,25 @@ export default function App() {
         <MeshBg />
         <HomePage onStart={() => navigate('/app')} />
       </>
+    );
+  }
+
+  /* ═══════════════ PAGE: ABOUT ════════════════════════════════════════════ */
+  if (path === '/about') {
+    return (
+      <div style={{ minHeight: '100vh', position: 'relative' }}>
+        <MeshBg />
+        <header style={S.header}>
+          <button onClick={() => navigate('/')} style={S.logoWrap}>
+            <span style={S.logoIcon}>💖</span>
+            <span style={S.logoLabel}>BLUUU V3</span>
+          </button>
+          <span className="pill pill-pink">📖 About</span>
+        </header>
+        <main style={{ maxWidth: 1040, margin: '0 auto', padding: '28px 20px 60px' }}>
+          <AboutPage onBack={() => navigate('/')} />
+        </main>
+      </div>
     );
   }
 
@@ -180,9 +200,15 @@ export default function App() {
       {/* Footer */}
       <footer style={S.footer}>
         <span>© {new Date().getFullYear()} BLUUU V3 · Build for R💖</span>
-        <button onClick={() => navigate('/admin')} style={S.footerAdmin}>
-          🔒 Administrator
-        </button>
+        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+          <button onClick={() => navigate('/about')} style={S.footerAdmin}>
+            📖 About BLUUU
+          </button>
+          <span style={{ color: '#c2a1ab' }}>·</span>
+          <button onClick={() => navigate('/admin')} style={S.footerAdmin}>
+            🔒 Administrator
+          </button>
+        </div>
       </footer>
     </div>
   );

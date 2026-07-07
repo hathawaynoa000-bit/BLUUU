@@ -100,7 +100,7 @@ export default function App() {
           <span style={S.logoLabel}>BLUUU V3</span>
         </button>
         {mode !== CONNECTION_MODES.NONE && (
-          <span className="pill pill-pink">✨ Liquid Glass</span>
+          <span className="pill pill-pink">Tools LDR</span>
         )}
       </header>
 

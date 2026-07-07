@@ -627,3 +627,59 @@ body::before {
   transform: scale(0.92);
 }
 
+/* Responsive Connection Forms */
+.connection-forms-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  border-top: 1px solid rgba(0,0,0,0.04);
+  padding-top: 18px;
+}
+.connection-form-item-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.connection-form-item-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-left: 1px solid rgba(0,0,0,0.04);
+  padding-left: 20px;
+}
+
+/* Responsive Camera Video Grid */
+.video-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+.video-grid.two-cols {
+  grid-template-columns: 1fr 1fr;
+}
+
+/* Media Queries for small screens */
+@media (max-width: 600px) {
+  /* Connection Forms */
+  .connection-forms-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .connection-form-item-right {
+    border-left: none;
+    border-top: 1px solid rgba(0,0,0,0.04);
+    padding-left: 0;
+    padding-top: 20px;
+  }
+
+  /* Camera Video Grid */
+  .video-grid.two-cols {
+    grid-template-columns: 1fr; /* Stack video feeds vertically on mobile */
+  }
+
+  /* Header Padding */
+  header {
+    padding: 10px 16px !important;
+  }
+}
+

@@ -338,9 +338,9 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
 
       {/* Remote: create / join forms */}
       {mode === CONNECTION_MODES.REMOTE && !roomActive && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 18 }}>
+        <div className="connection-forms-grid">
           {/* Create */}
-          <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <form onSubmit={handleCreate} className="connection-form-item-left">
             <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Room Baru</div>
             <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
@@ -352,7 +352,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
           </form>
 
           {/* Join */}
-          <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: 10, borderLeft: '1px solid rgba(0,0,0,0.04)', paddingLeft: 20 }}>
+          <form onSubmit={handleJoin} className="connection-form-item-right">
             <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Room</div>
             <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
@@ -360,7 +360,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
             <button type="submit" className="btn btn-glass" disabled={submitting}
               style={{ marginTop: 4, border: '1.5px solid rgba(232,68,106,0.2)', color: 'var(--accent-dark)' }}>
-              {submitting ? 'Bergabung...' : '💕 Bergabung'}
+              {submitting ? 'Bergabung...' : '🔑 Bergabung'}
             </button>
           </form>
         </div>

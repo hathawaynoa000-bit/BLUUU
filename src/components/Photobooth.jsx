@@ -696,7 +696,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
         </div>
 
         {/* Video feeds */}
-        <div style={{ display: 'grid', gridTemplateColumns: remoteStream ? '1fr 1fr' : '1fr', gap: 10 }}>
+        <div className={remoteStream ? "video-grid two-cols" : "video-grid"}>
           <div className="video-viewport" style={{ position: 'relative' }}>
             <video
               ref={localVideoRef}

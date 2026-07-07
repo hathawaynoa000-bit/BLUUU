@@ -388,7 +388,9 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   // Cleanup camera on unmount
   useEffect(() => {
     return () => {
-      localStream?.getTracks().forEach(t => t.stop());
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
     };
   }, [localStream]);
 

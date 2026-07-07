@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { API } from '../lib/api';
 
 /* ── Default fallback content (used if API fails) ── */

@@ -112,16 +112,15 @@ export default function App() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 36 }}>
             {/* Hero */}
             <section style={S.hero}>
-              <span className="pill pill-pink">💕 Dirancang khusus untuk pasangan LDR</span>
+              <span className="pill pill-pink">✨ Couple Experience</span>
               <h1 style={S.heroTitle}>
-                Take every moment<br />With your favorite <br />
+                Photobooth virtual .<br />
                 <span style={{ background: 'linear-gradient(135deg,#e8446a 0%,#ff6b8a 60%,#ff92a8 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                  Person
+                  Take the moment .
                 </span>
               </h1>
               <p style={S.heroSub}>
-                Photobooth virtual <br />
-                Real-time Photobooth.
+                Lanjutan dari BLU-2
               </p>
             </section>
 
@@ -136,10 +135,10 @@ export default function App() {
             {/* Feature cards */}
             <section style={S.featureGrid}>
               {[
-                { icon: '📸', title: 'Photobooth', desc: 'Buat capture Moment' },
-                { icon: '💬', title: 'Quetion Cards',  desc: 'Pertanyaan mendalam untuk mendekatkan hati dan membuka kenangan.' },
-                { icon: '🔥', title: 'Truth or Dare',    desc: 'Tantangan lucu dan pertanyaan jujur yang seru untuk pasangan.' },
-                { icon: '🏆', title: 'Siapa Paling...',  desc: 'Voting real-time saling menebak kepribadian pasangan langsung.' },
+                { icon: '📸', title: 'Photobooth', desc: 'Frame estetik, filter retro, dan sinkronisasi shutter secara real-time.' },
+                { icon: '📡', title: 'Real-Time Photobooth',  desc: 'Pertanyaan mendalam untuk mendekatkan hati dan membuka kenangan.' },
+                { icon: '💬', title: 'Couple Games',    desc: 'Tantangan lucu dan pertanyaan jujur yang seru untuk pasangan.' },
+                { icon: '🔒', title: 'Private Room',  desc: 'Voting real-time saling menebak kepribadian pasangan langsung.' },
               ].map(f => (
                 <div key={f.title} className="glass" style={S.featureCard}>
                   <div style={S.featureEmoji}>{f.icon}</div>
@@ -180,7 +179,7 @@ export default function App() {
 
       {/* Footer */}
       <footer style={S.footer}>
-        <span>© {new Date().getFullYear()} BLUUU V3 · Lanjutan dari BLU-2💖</span>
+        <span>© {new Date().getFullYear()} BLUUU V3 · Build for R💖</span>
         <button onClick={() => navigate('/admin')} style={S.footerAdmin}>
           🔒 Administrator
         </button>

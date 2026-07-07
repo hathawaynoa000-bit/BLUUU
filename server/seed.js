@@ -22,7 +22,7 @@ async function seed() {
     
     // 3. Create default admin if not exists
     const adminUser = process.env.ADMIN_USER || 'admin';
-    const adminPass = process.env.ADMIN_PASS || 'adminpinkglass';
+    const adminPass = process.env.ADMIN_PASS || 'LimabelasNoldua';
     
     const existingAdmin = await pool.query('SELECT * FROM admins WHERE username = $1', [adminUser]);
     

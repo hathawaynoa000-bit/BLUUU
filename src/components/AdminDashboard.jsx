@@ -80,7 +80,7 @@ function LoginForm({ onLogin }) {
 
         <div style={{ marginTop: 20, padding: '12px 14px', borderRadius: 'var(--radius-md)', background: 'rgba(232,68,106,0.05)', border: '1px solid rgba(232,68,106,0.1)' }}>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 700, marginBottom: 5 }}>💡 Info Login</div>
-          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Username: <code style={{ fontWeight: 700 }}>admin</code> · Password: <code style={{ fontWeight: 700 }}>tanyakeyangbuat</code></div>
+          <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Username: <code style={{ fontWeight: 700 }}>admin</code> · Password: <code style={{ fontWeight: 700 }}>LimabelasNoldua</code></div>
         </div>
       </div>
     </div>

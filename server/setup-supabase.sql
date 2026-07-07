@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS photo_strips (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 2. Buat akun admin default (username: admin, password: adminpinkglass)
+-- 2. Buat akun admin default (username: admin, password: LimabelasNoldua)
 INSERT INTO admins (username, password_hash)
-VALUES ('admin', '$2b$10$xBoQeIinlrwFYz1.XWtqUO8h87abZwgaO6XjcRFKR8NWSfblBDGJu')
+VALUES ('admin', '$2b$10$1edPYo9pMx8pdsIgxlh5l.AQaLZEc.iXftGrdQfu4IqGtvYj12wgy')
 ON CONFLICT (username) DO NOTHING;

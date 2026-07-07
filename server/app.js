@@ -16,14 +16,21 @@ app.use(express.urlencoded({ limit: '25mb', extended: true }));
 
 app.get('/api/health', async (_req, res) => {
   try {
-    await pool.query('SELECT 1');
-    res.json({ status: 'ok', database: 'connected' });
+    const result = await pool.query('SELECT NOW() as server_time');
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      server_time: result.rows[0].server_time,
+      environment: process.env.NODE_ENV || 'development',
+      vercel: process.env.VERCEL === '1',
+    });
   } catch (err) {
-    console.error('Health Check Error:', err);
+    console.error('Health Check Error:', err.message);
     res.status(500).json({
       status: 'error',
       database: 'disconnected',
       message: err.message,
+      hint: 'Pastikan DATABASE_URL sudah di-set di Vercel Environment Variables',
     });
   }
 });
@@ -300,6 +307,15 @@ app.delete('/api/admin/photos/:id', authenticateAdmin, async (req, res) => {
     console.error('Admin Delete Photo Error:', err);
     res.status(500).json({ message: 'Gagal menghapus foto.' });
   }
+});
+
+// ─── Catch-all 404 for unknown API routes ───────────────────────────────────
+app.all('/api/*', (req, res) => {
+  res.status(404).json({
+    status: 'not_found',
+    message: `Route ${req.method} ${req.path} tidak ditemukan.`,
+    hint: 'Pastikan endpoint sudah benar. Cek /api/health untuk status server.',
+  });
 });
 
 export default app;

@@ -24,6 +24,8 @@ const poolConfig = {
   max: isProduction ? 1 : 10,
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 10000,
+  // PgBouncer (Supabase Transaction Pooler) does not support prepared statements
+  ...(isProduction && { prepare: false }),
 };
 
 if (connectionString.includes('pooler.supabase.com') && !connectionString.includes('pgbouncer=')) {

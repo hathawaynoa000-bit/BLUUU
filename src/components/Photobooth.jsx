@@ -483,12 +483,48 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     // Apply filter
     if (currentFilter.css) ctx.filter = currentFilter.css;
 
-    // Mirror (selfie style)
-    ctx.save();
-    ctx.translate(W, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(v, 0, 0, W, H);
-    ctx.restore();
+    // Draw feeds helper
+    const vr = remoteStream ? remoteVideoRef.current : null;
+
+    const drawFeed = (videoEl, destX, destY, destW, destH, mirror) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(destX, destY, destW, destH);
+      ctx.clip();
+
+      const videoW = videoEl.videoWidth > 0 ? videoEl.videoWidth : 640;
+      const videoH = videoEl.videoHeight > 0 ? videoEl.videoHeight : 480;
+      const videoAspect = videoW / videoH;
+      const targetAspect = destW / destH;
+
+      let sx = 0, sy = 0, sw = videoW, sh = videoH;
+      if (videoAspect > targetAspect) {
+        sw = videoH * targetAspect;
+        sx = (videoW - sw) / 2;
+      } else {
+        sh = videoW / targetAspect;
+        sy = (videoH - sh) / 2;
+      }
+
+      if (mirror) {
+        ctx.translate(destX + destW, destY);
+        ctx.scale(-1, 1);
+        ctx.drawImage(videoEl, sx, sy, sw, sh, 0, 0, destW, destH);
+      } else {
+        ctx.drawImage(videoEl, sx, sy, sw, sh, destX, destY, destW, destH);
+      }
+      ctx.restore();
+    };
+
+    if (vr) {
+      // Draw side-by-side: Local on left, Remote on right
+      drawFeed(v, 0, 0, W / 2, H, mirrorLocal);
+      drawFeed(vr, W / 2, 0, W / 2, H, mirrorRemote);
+    } else {
+      // Draw full width solo
+      drawFeed(v, 0, 0, W, H, mirrorLocal);
+    }
+
     ctx.filter = 'none';
 
     // Note: Frames are no longer drawn directly on the raw capture; 

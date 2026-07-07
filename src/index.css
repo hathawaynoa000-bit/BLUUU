@@ -676,7 +676,8 @@ body::before {
 
   /* Camera Video Grid */
   .video-grid.two-cols {
-    grid-template-columns: 1fr; /* Stack video feeds vertically on mobile */
+    grid-template-columns: 1fr 1fr; /* Keep feeds side-by-side on mobile */
+    gap: 8px;
   }
 
   /* Header Padding */

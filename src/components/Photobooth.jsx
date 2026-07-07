@@ -758,7 +758,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
             {!localStream
               ? '⏳ Menunggu izin kamera...'
               : isRemote && !isConnected
-              ? '⚠️ Sambungkan kamar privat untuk mulai berfoto'
+              ? '⚠️ Sambungkan Room privat untuk mulai berfoto'
               : shooting
               ? '⏳ Mengambil foto...'
               : `${4 - captures.length} foto tersisa · tekan untuk mulai`}
@@ -818,7 +818,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
       {roomCode && gallery.length > 0 && (
         <div className="glass" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-            🌸 Galeri Foto Kamar ({gallery.length})
+            🌸 Galeri Foto Room ({gallery.length})
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
             {gallery.map(g => (

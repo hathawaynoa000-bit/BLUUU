@@ -77,8 +77,8 @@ export default function HomePage({ onStart }) {
         {/* Feature pills */}
         <div style={S.featurePills}>
           {[
-            { icon: '📸', label: '4-Cut Photobooth' },
-            { icon: '📡', label: 'WebRTC Real-time' },
+            { icon: '📸', label: 'Photobooth' },
+            { icon: '📡', label: 'Real-Time Photobooth' },
             { icon: '💬', label: 'Couple Games' },
             { icon: '🔒', label: 'Private Room' },
           ].map(f => (
@@ -108,12 +108,12 @@ export default function HomePage({ onStart }) {
         </button>
 
         {/* Bottom note */}
-        <p style={S.note}>Tersedia di browser · Tanpa install · Gratis selamanya</p>
+        <p style={S.note}>Lanjutan dari BLU-2</p>
       </div>
 
       {/* Footer link to admin */}
       <div style={S.footerBar}>
-        <span style={S.footerText}>© 2026 BLUUU V3 · Built with 💖</span>
+        <span style={S.footerText}>© 2026 BLUUU V3 · Build for R💖</span>
         <button onClick={() => {
           window.history.pushState({}, '', '/admin');
           window.dispatchEvent(new PopStateEvent('popstate'));

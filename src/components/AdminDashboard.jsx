@@ -130,7 +130,7 @@ export default function AdminDashboard() {
   const deleteRoom = async (id) => {
     try {
       const r = await fetch(`${API}/admin/rooms/${id}`, { method: 'DELETE', headers });
-      if (!r.ok) throw new Error('Gagal menghapus kamar');
+      if (!r.ok) throw new Error('Gagal menghapus Room');
       setRooms(prev => prev.filter(rm => rm.id !== id));
       setDeleting(null);
     } catch (e) { setError(e.message); }
@@ -220,7 +220,7 @@ export default function AdminDashboard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.04em' }}>Dashboard</h1>
-          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Kelola kamar, foto, games, dan statistik BLUUU</p>
+          <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>Kelola room, foto, games, dan statistik BLUUU</p>
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button className="btn btn-glass btn-sm" onClick={fetchAll} disabled={loading}>
@@ -236,7 +236,7 @@ export default function AdminDashboard() {
       <div className="seg-control">
         {['overview', 'rooms', 'photos', 'games'].map(t => (
           <button key={t} onClick={() => setTab(t)} className={`seg-btn${tab === t ? ' active' : ''}`}>
-            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Kamar' : t === 'photos' ? '📸 Foto Gallery' : '🎮 Konten Game'}
+            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Room' : t === 'photos' ? '📸 Foto Gallery' : '🎮 Konten Game'}
           </button>
         ))}
       </div>
@@ -244,8 +244,8 @@ export default function AdminDashboard() {
       {/* Overview */}
       {tab === 'overview' && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: 12 }}>
-          <Metric icon="🏠" label="Total Kamar" value={stats?.total_rooms ?? '—'} sub="Sejak awal" accent />
-          <Metric icon="✅" label="Kamar Aktif" value={stats?.active_rooms ?? '—'} sub="Saat ini" />
+          <Metric icon="🏠" label="Total Room" value={stats?.total_rooms ?? '—'} sub="Sejak awal" accent />
+          <Metric icon="✅" label="Room Aktif" value={stats?.active_rooms ?? '—'} sub="Saat ini" />
           <Metric icon="⏳" label="Menunggu" value={stats?.waiting_rooms ?? '—'} sub="1 pengguna" />
           <Metric icon="📸" label="Total Foto" value={stats?.total_photos ?? '—'} sub="Terunduh" />
           <Metric icon="👥" label="Terhubung" value={stats?.connected_sessions ?? '—'} sub="Live" />
@@ -256,13 +256,13 @@ export default function AdminDashboard() {
       {tab === 'rooms' && (
         <div className="glass" style={{ padding: 0, overflow: 'hidden' }}>
           <div style={{ padding: '16px 22px', borderBottom: '1px solid rgba(0,0,0,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Semua Kamar ({rooms.length})</span>
+            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Semua Room ({rooms.length})</span>
             <span className="pill pill-pink">🔒 Privat</span>
           </div>
           {rooms.length === 0 ? (
             <div style={{ padding: '44px 24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>🏠</div>
-              Belum ada kamar dibuat.
+              Belum ada Room dibuat.
             </div>
           ) : (
             <div style={{ overflowX: 'auto' }}>
@@ -346,7 +346,7 @@ export default function AdminDashboard() {
                       💕 {ph.couple_names}
                     </div>
                     <div style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>
-                      Kamar: {ph.room_code}
+                      Room: {ph.room_code}
                     </div>
                     <div style={{ fontSize: 9, color: 'var(--text-quaternary)', marginTop: 2 }}>
                       {new Date(ph.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
@@ -529,8 +529,8 @@ export default function AdminDashboard() {
           <div className="panel" style={{ maxWidth: 340 }} onClick={e => e.stopPropagation()}>
             <div style={{ textAlign: 'center', marginBottom: 20 }}>
               <div style={{ fontSize: 44, marginBottom: 10 }}>🗑️</div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Hapus Kamar?</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Data kamar akan dihapus permanen.</p>
+              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Hapus Room?</h3>
+              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Data Room akan dihapus permanen.</p>
             </div>
             <div style={{ display: 'flex', gap: 8 }}>
               <button className="btn btn-glass" style={{ flex: 1 }} onClick={() => setDeleting(null)}>Batal</button>

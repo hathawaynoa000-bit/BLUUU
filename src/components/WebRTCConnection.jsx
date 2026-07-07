@@ -147,7 +147,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       });
 
       if (role === 'creator') {
-        setSuccessMsg('Kamar aktif! Kirim kode & sandi ke pasanganmu.');
+        setSuccessMsg('Room aktif! Kirim kode & sandi ke pasanganmu.');
         // Creator waits: poll until joiner registers, then call them
         pollRef.current = setInterval(async () => {
           try {
@@ -187,7 +187,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   // ─── Joiner connects to creator ───────────────────────────────────────────
   const joinAndConnect = async (room, stream, attempt = 0) => {
     if (attempt > 20) {
-      setErrorMsg('Tidak dapat menemukan kamar. Pastikan kreator sudah aktif.');
+      setErrorMsg('Tidak dapat menemukan Room. Pastikan kreator sudah aktif.');
       return;
     }
     try {
@@ -324,7 +324,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
           }`} />
           <div>
             <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
-              {mode === CONNECTION_MODES.LOCAL ? 'Mode Berdua Langsung' : 'Mode Kamar Privat'}
+              {mode === CONNECTION_MODES.LOCAL ? 'Mode Berdua Langsung' : 'Mode Room Privat'}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
               {connState === 'connected'  ? `Terhubung · ${roomCode.toUpperCase()}` :
@@ -341,8 +341,8 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 18 }}>
           {/* Create */}
           <form onSubmit={handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Kamar Baru</div>
-            <label style={labelStyle}>Kode Kamar</label>
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Room Baru</div>
+            <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
             <label style={labelStyle}>Kata Sandi</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
@@ -353,8 +353,8 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
 
           {/* Join */}
           <form onSubmit={handleJoin} style={{ display: 'flex', flexDirection: 'column', gap: 10, borderLeft: '1px solid rgba(0,0,0,0.04)', paddingLeft: 20 }}>
-            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Kamar</div>
-            <label style={labelStyle}>Kode Kamar</label>
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Room</div>
+            <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
             <label style={labelStyle}>Kata Sandi</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
@@ -369,7 +369,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       {/* Active room code display */}
       {mode === CONNECTION_MODES.REMOTE && roomActive && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 14 }}>
-          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>🔒 Kamar:</span>
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>🔒 Room:</span>
           <code style={{ fontWeight: 800, fontSize: 13, color: 'var(--accent-dark)', background: 'rgba(232,68,106,0.08)', padding: '3px 12px', borderRadius: 8 }}>
             {roomCode.toUpperCase()}
           </code>

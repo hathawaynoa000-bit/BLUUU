@@ -647,7 +647,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   /* ─── RENDER ─── */
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div className="glass" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 18, position: 'relative' }}>
+      <div className="glass workspace-card" style={{ display: 'flex', flexDirection: 'column', gap: 18, position: 'relative' }}>
 
         {/* Flash overlay */}
         <div className="flash" ref={flashRef} />
@@ -661,7 +661,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
         )}
 
         {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
           <div>
             <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>
               📸 Photo Booth
@@ -894,7 +894,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
 
       {/* Gallery */}
       {roomCode && gallery.length > 0 && (
-        <div className="glass" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div className="glass workspace-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
             🌸 Galeri Foto Room ({gallery.length})
           </div>

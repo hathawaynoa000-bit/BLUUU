@@ -82,7 +82,7 @@ export default function App() {
           </button>
           <span className="pill pill-pink">📖 About</span>
         </header>
-        <main style={{ maxWidth: 1040, margin: '0 auto', padding: '28px 20px 60px' }}>
+        <main className="main-content" style={{ maxWidth: 1040 }}>
           <AboutPage onBack={() => navigate('/')} />
         </main>
       </div>
@@ -101,7 +101,7 @@ export default function App() {
           </button>
           <span className="pill pill-pink">🔒 Admin Dashboard</span>
         </header>
-        <main style={{ maxWidth: 1040, margin: '0 auto', padding: '28px 20px 60px' }}>
+        <main className="main-content" style={{ maxWidth: 1040 }}>
           <AdminDashboard />
         </main>
       </div>
@@ -125,7 +125,7 @@ export default function App() {
       </header>
 
       {/* Content */}
-      <main style={{ maxWidth: 1120, margin: '0 auto', padding: '20px 20px 60px' }}>
+      <main className="main-content">
 
         {/* ── Landing: pick mode ── */}
         {mode === CONNECTION_MODES.NONE && (

@@ -333,9 +333,9 @@ export default function CoupleGames({ isRemote, connState, sendData, remoteGameS
   };
 
   return (
-    <div className="glass" style={{ padding: '20px 22px', display: 'flex', flexDirection: 'column', gap: 14, height: 'fit-content' }}>
+    <div className="glass workspace-card" style={{ display: 'flex', flexDirection: 'column', gap: 14, height: 'fit-content' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <div>
           <div style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em' }}>🎮 Games</div>
           <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>{live ? '🔗 Sinkron aktif' : '📱 Mode lokal'}</div>

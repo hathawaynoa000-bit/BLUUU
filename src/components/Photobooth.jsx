@@ -325,7 +325,7 @@ function playShutter() {
   } catch (_) {}
 }
 
-export default function Photobooth({ connectionData, syncShutterState, triggerSyncCapture }) {
+export default function Photobooth({ connectionData, syncShutterState, triggerSyncCapture, remoteCamEnabled = true, remoteMicEnabled = true }) {
   const localVideoRef  = useRef(null);
   const remoteVideoRef = useRef(null);
   const flashRef       = useRef(null);
@@ -348,6 +348,32 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const [gallery,   setGallery]   = useState([]);
   const [uploading, setUploading] = useState(false);
   const [customFramesList, setCustomFramesList] = useState([]);
+
+  // Local media control states
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [camEnabled, setCamEnabled] = useState(true);
+
+  // Sync local audio/video tracks on change and notify remote partner
+  useEffect(() => {
+    if (localStream) {
+      localStream.getAudioTracks().forEach(t => { t.enabled = micEnabled; });
+    }
+    if (connectionData?.sendData) {
+      connectionData.sendData({ type: 'MIC_STATUS', enabled: micEnabled });
+    }
+  }, [micEnabled, localStream, connectionData]);
+
+  useEffect(() => {
+    if (localStream) {
+      localStream.getVideoTracks().forEach(t => { t.enabled = camEnabled; });
+    }
+    if (connectionData?.sendData) {
+      connectionData.sendData({ type: 'CAM_STATUS', enabled: camEnabled });
+    }
+  }, [camEnabled, localStream, connectionData]);
+
+  const toggleMic = () => setMicEnabled(p => !p);
+  const toggleCam = () => setCamEnabled(p => !p);
 
   // Fetch custom frames from API on mount
   useEffect(() => {
@@ -379,9 +405,11 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   useEffect(() => {
     let active = true;
     const startCam = async () => {
-      // Try video+audio, then video only
+      // Try video+audio, then video only fallback
       for (const constraints of [
+        { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: true },
         { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: false },
+        { video: true, audio: true },
         { video: true, audio: false },
       ]) {
         try {
@@ -742,14 +770,74 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
               playsInline
               style={{ filter: filter.css || undefined, transform: mirrorLocal ? 'scaleX(-1)' : 'none' }}
             />
+            {/* Mirror Toggle */}
             <button
               type="button"
               className="mirror-toggle-btn"
               onClick={() => setMirrorLocal(p => !p)}
+              style={{ top: 8, right: 8 }}
               title="Balik Kiri/Kanan"
             >
               ↔️
             </button>
+            {/* Camera & Mic Controls for Local user */}
+            <div style={{
+              position: 'absolute',
+              bottom: 8,
+              right: 8,
+              display: 'flex',
+              gap: 6,
+              zIndex: 10,
+            }}>
+              <button
+                type="button"
+                onClick={toggleMic}
+                style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: micEnabled ? 'rgba(0,0,0,0.55)' : '#ff3b30',
+                  color: '#fff', border: '1px solid rgba(255,255,255,0.35)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, transition: 'all 0.2s', outline: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+                title={micEnabled ? "Mute Mic" : "Unmute Mic"}
+              >
+                {micEnabled ? '🎙️' : '🔇'}
+              </button>
+              <button
+                type="button"
+                onClick={toggleCam}
+                style={{
+                  width: 32, height: 32, borderRadius: '50%',
+                  background: camEnabled ? 'rgba(0,0,0,0.55)' : '#ff3b30',
+                  color: '#fff', border: '1px solid rgba(255,255,255,0.35)',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 13, transition: 'all 0.2s', outline: 'none',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                }}
+                title={camEnabled ? "Matikan Kamera" : "Nyalakan Kamera"}
+              >
+                {camEnabled ? '📷' : '🚫'}
+              </button>
+            </div>
+            {/* Local Camera Off Placeholder */}
+            {!camEnabled && (
+              <div style={{
+                position: 'absolute',
+                inset: 0,
+                background: '#0c0608',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: 'var(--text-tertiary)',
+                gap: 8,
+                zIndex: 2,
+              }}>
+                <span style={{ fontSize: 26 }}>🚫</span>
+                <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '-0.02em' }}>Kamera Kamu Mati</span>
+              </div>
+            )}
             <div className="video-tag"><div className="dot dot-green" /> Kamu</div>
           </div>
           {remoteStream && (
@@ -764,10 +852,50 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
                 type="button"
                 className="mirror-toggle-btn"
                 onClick={() => setMirrorRemote(p => !p)}
+                style={{ top: 8, right: 8 }}
                 title="Balik Kiri/Kanan"
               >
                 ↔️
               </button>
+              {/* Remote Muted Tag */}
+              {!remoteMicEnabled && (
+                <div style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  background: 'rgba(255, 59, 48, 0.85)',
+                  color: '#fff',
+                  padding: '4px 10px',
+                  borderRadius: 999,
+                  fontSize: 10,
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  zIndex: 10,
+                  boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
+                }}>
+                  <span>🔇</span> Muted
+                </div>
+              )}
+              {/* Remote Camera Off Placeholder */}
+              {!remoteCamEnabled && (
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: '#0c0608',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: 'var(--text-tertiary)',
+                  gap: 8,
+                  zIndex: 2,
+                }}>
+                  <span style={{ fontSize: 26 }}>🚫</span>
+                  <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: '-0.02em' }}>Kamera Pasangan Mati</span>
+                </div>
+              )}
               <div className="video-tag"><div className="dot dot-pink" /> Pasangan</div>
             </div>
           )}

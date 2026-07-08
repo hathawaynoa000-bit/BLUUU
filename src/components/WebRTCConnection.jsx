@@ -37,18 +37,29 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   };
 
   const startCamera = async () => {
-    // Video only — no microphone needed for photobooth
+    // Try requesting both camera and microphone first
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: 'user' },
-        audio: false,
+        audio: true,
       });
       localStreamRef.current = stream;
       setLocalStream(stream);
       return stream;
     } catch (_) {
-      setErrorMsg('Gagal mengakses kamera. Pastikan izin browser diberikan.');
-      return null;
+      // Fallback: request camera only if microphone access is blocked/unavailable
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 640, height: 480, facingMode: 'user' },
+          audio: false,
+        });
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+        return stream;
+      } catch (_) {
+        setErrorMsg('Gagal mengakses kamera. Pastikan izin browser diberikan.');
+        return null;
+      }
     }
   };
 

@@ -85,10 +85,25 @@ export default function App() {
 
   const handleConnectionReady = (data) => setConnectionData(data);
 
+  const [remoteCamEnabled, setRemoteCamEnabled] = useState(true);
+  const [remoteMicEnabled, setRemoteMicEnabled] = useState(true);
+
+  // Reset remote states on disconnect/mode change
+  useEffect(() => {
+    if (mode === CONNECTION_MODES.NONE || connectionData?.connState !== 'connected') {
+      setRemoteCamEnabled(true);
+      setRemoteMicEnabled(true);
+    }
+  }, [mode, connectionData]);
+
   const handleDataReceived = (data) => {
     if (data.type === 'SHUTTER_TRIGGER') {
       setSyncShutterState('trigger');
       setTimeout(() => setSyncShutterState('idle'), 500);
+    } else if (data.type === 'CAM_STATUS') {
+      setRemoteCamEnabled(data.enabled);
+    } else if (data.type === 'MIC_STATUS') {
+      setRemoteMicEnabled(data.enabled);
     } else {
       setRemoteGameState(data);
     }
@@ -238,6 +253,8 @@ export default function App() {
                 connectionData={connectionData}
                 syncShutterState={syncShutterState}
                 triggerSyncCapture={triggerSyncCapture}
+                remoteCamEnabled={remoteCamEnabled}
+                remoteMicEnabled={remoteMicEnabled}
               />
               <CoupleGames
                 isRemote={mode === CONNECTION_MODES.REMOTE}

@@ -42,6 +42,47 @@ export default function App() {
   const [remoteGameState, setRemoteGameState]   = useState(null);
   const [syncShutterState, setSyncShutterState] = useState('idle');
 
+  // ─── Theme: Light / AMOLED Dark ───
+  const [theme, setTheme] = useState(() => {
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
+  const ThemeToggle = () => (
+    <button
+      onClick={toggleTheme}
+      className="btn-glass"
+      style={{
+        padding: '6px 12px',
+        fontSize: 12.5,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 6,
+        borderRadius: 999,
+        border: '1px solid var(--glass-border)',
+        cursor: 'pointer',
+        background: 'var(--glass-bg)',
+        color: 'var(--text-primary)',
+        transition: 'all 0.2s',
+        outline: 'none',
+        fontWeight: 700,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+      }}
+      title={theme === 'light' ? 'Mode Gelap' : 'Mode Terang'}
+    >
+      <span>{theme === 'light' ? '🌙' : '☀️'}</span>
+      <span>{theme === 'light' ? 'Dark' : 'Light'}</span>
+    </button>
+  );
+
   const handleConnectionReady = (data) => setConnectionData(data);
 
   const handleDataReceived = (data) => {
@@ -65,6 +106,9 @@ export default function App() {
     return (
       <>
         <MeshBg />
+        <div style={{ position: 'fixed', top: 16, right: 16, zIndex: 100 }}>
+          <ThemeToggle />
+        </div>
         <HomePage onStart={() => navigate('/app')} />
       </>
     );
@@ -80,7 +124,10 @@ export default function App() {
             <span style={S.logoIcon}>💖</span>
             <span style={S.logoLabel}>BLUUU V3</span>
           </button>
-          <span className="pill pill-pink">📖 About</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ThemeToggle />
+            <span className="pill pill-pink">📖 About</span>
+          </div>
         </header>
         <main className="main-content" style={{ maxWidth: 1040 }}>
           <AboutPage onBack={() => navigate('/')} />
@@ -99,7 +146,10 @@ export default function App() {
             <span style={S.logoIcon}>💖</span>
             <span style={S.logoLabel}>BLUUU V3</span>
           </button>
-          <span className="pill pill-pink">🔒 Admin Dashboard</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <ThemeToggle />
+            <span className="pill pill-pink">🔒 Admin</span>
+          </div>
         </header>
         <main className="main-content" style={{ maxWidth: 1040 }}>
           <AdminDashboard />
@@ -119,9 +169,12 @@ export default function App() {
           <span style={S.logoIcon}>💖</span>
           <span style={S.logoLabel}>BLUUU V3</span>
         </button>
-        {mode !== CONNECTION_MODES.NONE && (
-          <span className="pill pill-pink">Tools LDR</span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <ThemeToggle />
+          {mode !== CONNECTION_MODES.NONE && (
+            <span className="pill pill-pink">Tools LDR</span>
+          )}
+        </div>
       </header>
 
       {/* Content */}
@@ -220,10 +273,10 @@ const S = {
     position: 'sticky', top: 0, zIndex: 50,
     padding: '12px 28px',
     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-    background: 'rgba(254,242,244,0.6)',
+    background: 'var(--header-bg)',
     backdropFilter: 'saturate(180%) blur(28px)',
     WebkitBackdropFilter: 'saturate(180%) blur(28px)',
-    borderBottom: '1px solid rgba(255,255,255,0.4)',
+    borderBottom: '1.5px solid var(--header-border)',
   },
   logoWrap: {
     display: 'flex', alignItems: 'center', gap: 10,
@@ -238,7 +291,7 @@ const S = {
     boxShadow: '0 4px 16px rgba(232,68,106,0.35)',
   },
   logoLabel: {
-    fontWeight: 800, fontSize: 20, color: '#1d1017', letterSpacing: '-0.04em',
+    fontWeight: 800, fontSize: 20, color: 'var(--text-primary)', letterSpacing: '-0.04em',
   },
   hero: {
     textAlign: 'center', padding: '56px 16px 32px',
@@ -246,9 +299,9 @@ const S = {
   },
   heroTitle: {
     fontSize: 'clamp(34px, 5.5vw, 62px)',
-    fontWeight: 800, color: '#1d1017', lineHeight: 1.08, letterSpacing: '-0.04em',
+    fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1.08, letterSpacing: '-0.04em',
   },
-  heroSub: { fontSize: 15, color: '#6b4f58', lineHeight: 1.7, maxWidth: 440 },
+  heroSub: { fontSize: 15, color: 'var(--text-secondary)', lineHeight: 1.7, maxWidth: 440 },
   featureGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
@@ -260,19 +313,19 @@ const S = {
   },
   featureEmoji: {
     width: 42, height: 42, borderRadius: 13,
-    background: 'rgba(255,255,255,0.6)',
+    background: 'var(--glass-bg)',
     display: 'flex', alignItems: 'center', justifyContent: 'center',
     fontSize: 20,
-    border: '1px solid rgba(255,255,255,0.7)',
+    border: '1px solid var(--glass-border)',
     boxShadow: '0 2px 8px rgba(140,60,80,0.04)',
   },
   footer: {
     textAlign: 'center', padding: '20px',
-    fontSize: 11, color: '#a38890',
+    fontSize: 11, color: 'var(--text-tertiary)',
     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
   },
   footerAdmin: {
-    fontSize: 10.5, color: '#a38890', background: 'none',
+    fontSize: 10.5, color: 'var(--text-tertiary)', background: 'none',
     border: 'none', cursor: 'pointer', opacity: 0.6,
     textDecoration: 'underline', fontFamily: 'inherit',
   },

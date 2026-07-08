@@ -42,6 +42,50 @@
   --radius-lg: 24px;
   --radius-xl: 30px;
   --radius-full: 999px;
+
+  /* Header & fields */
+  --header-bg: rgba(254, 242, 244, 0.6);
+  --header-border: rgba(255, 255, 255, 0.4);
+  --field-bg: rgba(255, 255, 255, 0.5);
+  --field-border: rgba(255, 255, 255, 0.6);
+  --field-focus-bg: rgba(255, 255, 255, 0.85);
+  --field-focus-border: var(--accent-light);
+}
+
+/* 🖤 AMOLED DARK MODE THEME 🖤 */
+html[data-theme="dark"] {
+  --bg-base:    #0a0507;
+
+  /* Premium Obsidian Glass */
+  --glass-bg:         rgba(16, 8, 12, 0.72);
+  --glass-bg-hover:   rgba(24, 12, 18, 0.82);
+  --glass-bg-strong:  rgba(10, 4, 7, 0.9);
+  --glass-border:     rgba(255, 255, 255, 0.08);
+  --glass-border-lit: rgba(255, 255, 255, 0.16);
+  --glass-shadow:     0 12px 40px rgba(0, 0, 0, 0.65),
+                      0 1px 0 rgba(255,255,255,0.04) inset;
+  --glass-shadow-lg:  0 20px 50px rgba(0, 0, 0, 0.78),
+                      0 1px 0 rgba(255,255,255,0.06) inset;
+
+  /* Neon Accent */
+  --accent:       #ff4d79;
+  --accent-light: #ff7597;
+  --accent-dark:  #cc244c;
+  --accent-glow:  rgba(255, 77, 121, 0.35);
+
+  /* AMOLED High-contrast Text */
+  --text-primary:   #f5e6ea;
+  --text-secondary: #d4c2c6;
+  --text-tertiary:  #a18d94;
+  --text-quaternary:#47383c;
+
+  /* Header & fields dark */
+  --header-bg: rgba(12, 6, 8, 0.7);
+  --header-border: rgba(255, 255, 255, 0.06);
+  --field-bg: rgba(0, 0, 0, 0.4);
+  --field-border: rgba(255, 255, 255, 0.1);
+  --field-focus-bg: rgba(0, 0, 0, 0.6);
+  --field-focus-border: rgba(255, 77, 121, 0.6);
 }
 
 html {
@@ -49,6 +93,11 @@ html {
   -webkit-text-size-adjust: 100%;
   /* Same bg as body so no white shows when user zooms out */
   background: linear-gradient(135deg, #fff0f3 0%, #ffe3e8 40%, #ffd0da 75%, #ffb8c7 100%);
+  transition: background 0.4s ease;
+}
+
+html[data-theme="dark"] {
+  background: #080305;
 }
 
 body {
@@ -62,6 +111,11 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   letter-spacing: -0.01em;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+html[data-theme="dark"] body {
+  background: #080305;
 }
 
 /* ═══════════════════════════════════════════
@@ -76,6 +130,23 @@ body {
   overflow: hidden;
   pointer-events: none;
   background: linear-gradient(150deg, #ffe5ec 0%, #ffd6e0 40%, #ffccd5 75%, #ffa6c9 100%);
+  transition: background 0.4s ease;
+}
+
+html[data-theme="dark"] .mesh-bg {
+  background: linear-gradient(150deg, #0f070b 0%, #0a0407 40%, #050203 100%);
+}
+
+html[data-theme="dark"] .orb-1 {
+  background: radial-gradient(circle, rgba(232,68,106,0.22) 0%, rgba(255,107,138,0.06) 40%, rgba(255,255,255,0) 70%);
+}
+
+html[data-theme="dark"] .orb-2 {
+  background: radial-gradient(circle, rgba(147,51,234,0.2) 0%, rgba(128,147,241,0.05) 45%, rgba(255,255,255,0) 70%);
+}
+
+html[data-theme="dark"] .orb-3 {
+  background: radial-gradient(circle, rgba(255,77,121,0.18) 0%, rgba(255,182,193,0.04) 45%, rgba(255,255,255,0) 70%);
 }
 
 .orb {
@@ -226,8 +297,8 @@ body::before {
    ═══════════════════════════════════════════ */
 .field {
   width: 100%;
-  background: rgba(255,255,255,0.5);
-  border: 1.5px solid rgba(255,255,255,0.6);
+  background: var(--field-bg);
+  border: 1.5px solid var(--field-border);
   border-radius: var(--radius-md);
   padding: 12px 16px;
   font-family: var(--font);
@@ -241,9 +312,9 @@ body::before {
 }
 .field::placeholder { color: var(--text-quaternary); font-weight: 400; }
 .field:focus {
-  background: rgba(255,255,255,0.85);
-  border-color: var(--accent-light);
-  box-shadow: 0 0 0 4px rgba(232,68,106,0.12);
+  background: var(--field-focus-bg);
+  border-color: var(--field-focus-border);
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
 /* ═══════════════════════════════════════════

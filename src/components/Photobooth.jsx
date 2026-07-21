@@ -461,7 +461,10 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const fetchGallery = async () => {
     if (!roomCode) return;
     try {
-      const res = await fetch(`${API}/photos/room/${roomCode}`);
+      const headers = {};
+      if (connectionData?.roomToken) headers['Authorization'] = `Bearer ${connectionData.roomToken}`;
+      if (connectionData?.passcode) headers['x-room-passcode'] = connectionData.passcode;
+      const res = await fetch(`${API}/photos/room/${roomCode}`, { headers });
       if (res.ok) setGallery(await res.json());
     } catch (_) {}
   };
@@ -687,9 +690,12 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const uploadPhoto = async (photoData) => {
     setUploading(true);
     try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (connectionData?.roomToken) headers['Authorization'] = `Bearer ${connectionData.roomToken}`;
+      if (connectionData?.passcode) headers['x-room-passcode'] = connectionData.passcode;
       const res = await fetch(`${API}/photos/upload`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ roomCode, photoData, coupleNames: coupleNamesRef.current || 'Kita' }),
       });
       if (res.ok) fetchGallery();

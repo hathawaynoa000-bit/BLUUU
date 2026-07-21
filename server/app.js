@@ -3,12 +3,15 @@ import cors from 'cors';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import crypto from 'crypto';
 import pool from './db.js';
 
 dotenv.config();
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'pink_glass_booth_jwt_secret';
+
+// Fallback to random secure string if not configured in environment
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 
 app.use(cors());
 app.use(express.json({ limit: '25mb' }));
@@ -42,10 +45,50 @@ const authenticateAdmin = (req, res, next) => {
   if (!token) return res.status(401).json({ message: 'Token tidak ditemukan. Akses ditolak.' });
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: 'Token tidak valid atau kedaluwarsa.' });
+    if (err || !user?.isAdmin) return res.status(403).json({ message: 'Token tidak valid atau kedaluwarsa.' });
     req.admin = user;
     next();
   });
+};
+
+// Middleware: Authenticate Room Access (via Room JWT or Passcode header)
+const authenticateRoom = async (req, res, next) => {
+  const targetRoom = (req.params.roomCode || req.body.roomCode || '').toUpperCase().trim();
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+  const passcode = req.headers['x-room-passcode'];
+
+  if (token) {
+    jwt.verify(token, JWT_SECRET, (err, decoded) => {
+      if (!err && decoded && (decoded.isAdmin || decoded.roomCode === targetRoom)) {
+        req.roomAuth = decoded;
+        return next();
+      }
+      verifyByPasscode();
+    });
+  } else {
+    verifyByPasscode();
+  }
+
+  async function verifyByPasscode() {
+    if (!passcode && !token) {
+      // For backward compatibility if neither is provided, check if room exists
+      // but warn/restrict if room is active
+      return res.status(401).json({ message: 'Akses ditolak: Diperlukan otentikasi room yang valid.' });
+    }
+
+    if (passcode && targetRoom) {
+      try {
+        const result = await pool.query('SELECT passcode, expires_at, status FROM rooms WHERE room_code = $1', [targetRoom]);
+        if (result.rows.length === 0) return res.status(404).json({ message: 'Room tidak ditemukan.' });
+        const room = result.rows[0];
+        const isValid = await bcrypt.compare(String(passcode).trim(), room.passcode);
+        if (isValid) return next();
+      } catch (_) {}
+    }
+
+    return res.status(403).json({ message: 'Akses ditolak: Token atau sandi room tidak valid.' });
+  }
 };
 
 app.post('/api/admin/login', async (req, res) => {
@@ -68,7 +111,7 @@ app.post('/api/admin/login', async (req, res) => {
       return res.status(401).json({ message: 'Username atau password salah.' });
     }
 
-    const token = jwt.sign({ id: admin.id, username: admin.username }, JWT_SECRET, { expiresIn: '2h' });
+    const token = jwt.sign({ id: admin.id, username: admin.username, isAdmin: true }, JWT_SECRET, { expiresIn: '8h' });
     res.json({ token, username: admin.username });
   } catch (err) {
     console.error('Login Error:', err);
@@ -114,9 +157,12 @@ app.post('/api/rooms/create', async (req, res) => {
       [formattedCode, hashedPasscode, expiresAt]
     );
 
+    const roomToken = jwt.sign({ roomCode: formattedCode, role: 'creator' }, JWT_SECRET, { expiresIn: '7d' });
+
     res.status(201).json({
       message: 'Kamar privat berhasil dibuat.',
       roomCode: formattedCode,
+      roomToken,
       expiresAt,
     });
   } catch (err) {
@@ -151,14 +197,20 @@ app.post('/api/rooms/join', async (req, res) => {
       return res.status(401).json({ message: 'Sandi kamar salah.' });
     }
 
-    res.json({ message: 'Berhasil bergabung dengan kamar.', roomCode: formattedCode });
+    const roomToken = jwt.sign({ roomCode: formattedCode, role: 'joiner' }, JWT_SECRET, { expiresIn: '7d' });
+
+    res.json({
+      message: 'Berhasil bergabung dengan kamar.',
+      roomCode: formattedCode,
+      roomToken,
+    });
   } catch (err) {
     console.error('Join Room Error:', err);
     res.status(500).json({ message: 'Gagal memproses penggabungan kamar.' });
   }
 });
 
-app.post('/api/rooms/update-peer', async (req, res) => {
+app.post('/api/rooms/update-peer', authenticateRoom, async (req, res) => {
   const { roomCode, peerId, role } = req.body;
 
   if (!roomCode || !peerId || !role) {
@@ -179,7 +231,7 @@ app.post('/api/rooms/update-peer', async (req, res) => {
   }
 });
 
-app.get('/api/rooms/peers/:roomCode', async (req, res) => {
+app.get('/api/rooms/peers/:roomCode', authenticateRoom, async (req, res) => {
   const { roomCode } = req.params;
 
   try {
@@ -199,7 +251,7 @@ app.get('/api/rooms/peers/:roomCode', async (req, res) => {
   }
 });
 
-app.post('/api/photos/upload', async (req, res) => {
+app.post('/api/photos/upload', authenticateRoom, async (req, res) => {
   const { roomCode, photoData, coupleNames } = req.body;
 
   if (!roomCode || !photoData || !coupleNames) {
@@ -218,7 +270,7 @@ app.post('/api/photos/upload', async (req, res) => {
   }
 });
 
-app.get('/api/photos/room/:roomCode', async (req, res) => {
+app.get('/api/photos/room/:roomCode', authenticateRoom, async (req, res) => {
   const { roomCode } = req.params;
 
   try {
@@ -309,108 +361,88 @@ app.delete('/api/admin/photos/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
-// ─── Game Content (Public) ──────────────────────────────────────────────────
-app.get('/api/content', async (_req, res) => {
+// ─── Game Content Public (Read-Only) ─────────────────────────────────────────
+app.get('/api/games/content', async (_req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, game_type, text_content FROM game_content WHERE is_active = true ORDER BY game_type, sort_order'
+      'SELECT id, game_type, text_content, sort_order FROM game_content WHERE is_active = true ORDER BY game_type, sort_order ASC'
     );
-    const grouped = {};
-    for (const row of result.rows) {
-      if (!grouped[row.game_type]) grouped[row.game_type] = [];
-      grouped[row.game_type].push(row.text_content);
-    }
-    res.json(grouped);
+    res.json(result.rows);
   } catch (err) {
-    console.error('Fetch Content Error:', err);
+    console.error('Fetch Game Content Error:', err);
     res.status(500).json({ message: 'Gagal memuat konten game.' });
   }
 });
 
-// ─── Game Content Admin ─────────────────────────────────────────────────────
-app.get('/api/admin/content', authenticateAdmin, async (_req, res) => {
+// ─── Game Content Admin ──────────────────────────────────────────────────────
+app.get('/api/admin/games', authenticateAdmin, async (_req, res) => {
   try {
     const result = await pool.query(
-      'SELECT * FROM game_content ORDER BY game_type, sort_order, id'
+      'SELECT id, game_type, text_content, sort_order, is_active, created_at FROM game_content ORDER BY game_type, sort_order ASC'
     );
     res.json(result.rows);
   } catch (err) {
-    console.error('Admin Fetch Content Error:', err);
-    res.status(500).json({ message: 'Gagal memuat konten.' });
+    console.error('Admin Fetch Games Error:', err);
+    res.status(500).json({ message: 'Gagal memuat list game content.' });
   }
 });
 
-app.post('/api/admin/content', authenticateAdmin, async (req, res) => {
-  const { game_type, text_content } = req.body;
+app.post('/api/admin/games', authenticateAdmin, async (req, res) => {
+  const { game_type, text_content, sort_order } = req.body;
   if (!game_type || !text_content) {
     return res.status(400).json({ message: 'game_type dan text_content harus diisi.' });
   }
-  const validTypes = ['deep', 'truth', 'dare', 'likely'];
-  if (!validTypes.includes(game_type)) {
-    return res.status(400).json({ message: `game_type harus salah satu dari: ${validTypes.join(', ')}` });
-  }
   try {
-    const maxOrder = await pool.query(
-      'SELECT COALESCE(MAX(sort_order), 0) + 1 as next_order FROM game_content WHERE game_type = $1',
-      [game_type]
-    );
     const result = await pool.query(
       'INSERT INTO game_content (game_type, text_content, sort_order) VALUES ($1, $2, $3) RETURNING *',
-      [game_type, text_content.trim(), maxOrder.rows[0].next_order]
+      [game_type, text_content.trim(), sort_order || 0]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Admin Create Content Error:', err);
-    res.status(500).json({ message: 'Gagal menambah konten.' });
+    console.error('Admin Create Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal menambah item game.' });
   }
 });
 
-app.put('/api/admin/content/:id', authenticateAdmin, async (req, res) => {
+app.put('/api/admin/games/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
-  const { text_content, is_active } = req.body;
+  const { text_content, sort_order, is_active } = req.body;
   try {
-    const fields = [];
-    const values = [];
-    let idx = 1;
-    if (text_content !== undefined) { fields.push(`text_content = $${idx++}`); values.push(text_content.trim()); }
-    if (is_active !== undefined) { fields.push(`is_active = $${idx++}`); values.push(is_active); }
-    if (fields.length === 0) return res.status(400).json({ message: 'Tidak ada field yang diupdate.' });
-    values.push(id);
     const result = await pool.query(
-      `UPDATE game_content SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
-      values
+      'UPDATE game_content SET text_content = COALESCE($1, text_content), sort_order = COALESCE($2, sort_order), is_active = COALESCE($3, is_active) WHERE id = $4 RETURNING *',
+      [text_content, sort_order, is_active, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Konten tidak ditemukan.' });
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Item tidak ditemukan.' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error('Admin Update Content Error:', err);
-    res.status(500).json({ message: 'Gagal mengupdate konten.' });
+    console.error('Admin Update Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal mengubah item game.' });
   }
 });
 
-app.delete('/api/admin/content/:id', authenticateAdmin, async (req, res) => {
+app.delete('/api/admin/games/:id', authenticateAdmin, async (req, res) => {
   const { id } = req.params;
   try {
-    const result = await pool.query('DELETE FROM game_content WHERE id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Konten tidak ditemukan.' });
-    res.json({ message: 'Konten berhasil dihapus.' });
+    const result = await pool.query('DELETE FROM game_content WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Item tidak ditemukan.' });
+    res.json({ message: 'Item game berhasil dihapus.' });
   } catch (err) {
-    console.error('Admin Delete Content Error:', err);
-    res.status(500).json({ message: 'Gagal menghapus konten.' });
+    console.error('Admin Delete Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal menghapus item game.' });
   }
 });
 
-app.post('/api/admin/content/seed', authenticateAdmin, async (_req, res) => {
+app.post('/api/admin/games/seed-defaults', authenticateAdmin, async (_req, res) => {
   try {
     await pool.query('DELETE FROM game_content');
     const defaults = [
       { type: 'deep', items: [
-        'Kapan pertama kali kamu sadar jatuh cinta padaku?',
-        'Apa momen terfavorit kita yang selalu kamu ingat?',
-        'Mimpi terbesarmu yang ingin kita capai bersama?',
-        'Hal apa dariku yang paling kamu suka?',
-        'Kalau bisa kembali ke satu hari denganku, hari apa?',
-        'Apa ketakutan terbesar yang belum kamu ceritakan?',
+        'Momen apa dalam hubungan kita yang paling membuatmu merasa dicintai?',
+        'Apa ketakutan terbesarmu tentang masa depan yang belum pernah kamu ceritakan?',
+        'Hal apa yang paling kamu syukuri dari caraku memperlakukanmu?',
+        'Jika kamu bisa mengulang satu hari bersamaku, hari apa yang kamu pilih?',
+        'Apa impian terbesar kita berdua yang paling ingin kamu wujudkan tahun ini?',
+        'Kapan kamu pertama kali sadar bahwa kamu benar-benar sayang padaku?',
         'Hal kecil apa yang selalu membuatmu teringat padaku?',
         'Kalau kita punya satu hari tanpa HP, mau ngapain?',
         'Apa yang paling ingin kamu pelajari dari kepribadianku?',

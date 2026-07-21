@@ -11,6 +11,7 @@ export const CONNECTION_MODES = {
 export default function WebRTCConnection({ mode, setMode, onConnectionReady, onDataReceived }) {
   const [roomCode, setRoomCode] = useState('');
   const [passcode, setPasscode] = useState('');
+  const [roomToken, setRoomToken] = useState(() => sessionStorage.getItem('bluuu_room_token') || '');
   const [isCreator, setIsCreator] = useState(false);
   const [roomActive, setRoomActive] = useState(false);
   const [connState, setConnState] = useState('disconnected');
@@ -37,7 +38,6 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   };
 
   const startCamera = async () => {
-    // Try requesting both camera and microphone first
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { width: 640, height: 480, facingMode: 'user' },
@@ -47,7 +47,6 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       setLocalStream(stream);
       return stream;
     } catch (_) {
-      // Fallback: request camera only if microphone access is blocked/unavailable
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { width: 640, height: 480, facingMode: 'user' },
@@ -78,6 +77,8 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       setSuccessMsg('');
       setRoomCode('');
       setPasscode('');
+      setRoomToken('');
+      sessionStorage.removeItem('bluuu_room_token');
     }
     return () => {
       stopCamera();
@@ -95,28 +96,34 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       connState,
       sendData,
       roomCode: roomCode.toUpperCase(),
+      roomToken,
+      passcode,
+      isCreator,
       isRemote: mode === CONNECTION_MODES.REMOTE,
     });
-  }, [localStream, remoteStream, connState, mode, roomCode]);
+  }, [localStream, remoteStream, connState, mode, roomCode, roomToken, isCreator, passcode]);
 
-  // ─── sendData helper (stable ref) ─────────────────────────────────────────
+  // ─── sendData helper ──────────────────────────────────────────────────────
   const sendData = (data) => connRef.current?.open ? (connRef.current.send(data), true) : false;
 
-  // ─── Keepalive ping to prevent NAT/firewall dropping idle connections ──────
+  // ─── Keepalive ping ───────────────────────────────────────────────────────
   const startKeepalive = () => {
     if (keepaliveRef.current) clearInterval(keepaliveRef.current);
     keepaliveRef.current = setInterval(() => {
       if (connRef.current?.open) {
         try { connRef.current.send({ type: 'PING' }); } catch (_) {}
       }
-    }, 20000); // ping every 20 seconds
+    }, 20000);
   };
 
   // ─── Data channel setup ───────────────────────────────────────────────────
   const setupDataChannel = (conn) => {
     connRef.current = conn;
     conn.on('data', d => {
-      if (d?.type === 'PING') return; // ignore keepalive pings
+      if (d?.type === 'PING') return;
+      if (d?.type === 'CHAT_MSG' || d?.type === 'CHAT_TYPING') {
+        window.dispatchEvent(new CustomEvent('webrtc-chat-data', { detail: d }));
+      }
       onDataReceived?.(d);
     });
     conn.on('open', () => {
@@ -154,8 +161,7 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   };
 
   // ─── Init PeerJS ──────────────────────────────────────────────────────────
-  const initPeer = async (room, role, stream) => {
-    // Unique peer ID based on room + role to avoid collision
+  const initPeer = async (room, role, stream, token, currentPass) => {
     const rand = Math.floor(1000 + Math.random() * 9000);
     const id = `bl-${role}-${room.toLowerCase()}-${rand}`;
     const peer = new Peer(id, {
@@ -175,43 +181,47 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
     });
     peerRef.current = peer;
 
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      'x-room-passcode': currentPass || passcode,
+    };
+
     peer.on('open', async (pid) => {
       console.log(`[PeerJS] Open: ${pid}`);
-      // Register our peer ID in DB
-      await fetch(`${API}/rooms/update-peer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roomCode: room, peerId: pid, role }),
-      });
+      try {
+        await fetch(`${API}/rooms/update-peer`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ roomCode: room, peerId: pid, role }),
+        });
+      } catch (_) {}
 
       if (role === 'creator') {
-        setSuccessMsg('Room aktif! Kirim kode & sandi ke pasanganmu.');
-        // Creator waits: poll until joiner registers, then call them
+        setSuccessMsg('🔒 Room aktif & terproteksi sandi! Kirim kode & sandi ke pasanganmu.');
         pollRef.current = setInterval(async () => {
           try {
-            const r = await fetch(`${API}/rooms/peers/${room}`);
-            const d = await r.json();
-            if (d.joiner_peer_id) {
-              clearInterval(pollRef.current);
-              // Initiate video call to joiner
-              makeCall(d.joiner_peer_id, stream);
+            const r = await fetch(`${API}/rooms/peers/${room}`, { headers });
+            if (r.ok) {
+              const d = await r.json();
+              if (d.joiner_peer_id) {
+                clearInterval(pollRef.current);
+                makeCall(d.joiner_peer_id, stream);
+              }
             }
           } catch (_) {}
         }, 1500);
       } else {
-        // Joiner: fetch creator peer and initiate data+video connection
-        joinAndConnect(room, stream);
+        joinAndConnect(room, stream, 0, token, currentPass);
       }
     });
 
-    // Listen for incoming calls (both sides answer)
     peer.on('call', call => handleIncomingCall(call));
 
-    // Listen for incoming data connections (creator receives)
     peer.on('connection', (conn) => {
       setupDataChannel(conn);
       setConnState('connected');
-      setSuccessMsg('Terhubung! Selamat bermain bersama 💕');
+      setSuccessMsg('🔒 Terhubung secara E2EE! Selamat bermain bersama 💕');
       setErrorMsg('');
     });
 
@@ -223,19 +233,23 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
   };
 
   // ─── Joiner connects to creator ───────────────────────────────────────────
-  const joinAndConnect = async (room, stream, attempt = 0) => {
+  const joinAndConnect = async (room, stream, attempt = 0, token, currentPass) => {
     if (attempt > 20) {
       setErrorMsg('Tidak dapat menemukan Room. Pastikan kreator sudah aktif.');
       return;
     }
+    const headers = {
+      'Authorization': `Bearer ${token || roomToken}`,
+      'x-room-passcode': currentPass || passcode,
+    };
     try {
-      const r  = await fetch(`${API}/rooms/peers/${room}`);
+      const r  = await fetch(`${API}/rooms/peers/${room}`, { headers });
+      if (!r.ok) throw new Error();
       const d  = await r.json();
       const creatorId = d.creator_peer_id;
 
       if (!creatorId) {
-        // Creator not ready yet, retry
-        setTimeout(() => joinAndConnect(room, stream, attempt + 1), 2000);
+        setTimeout(() => joinAndConnect(room, stream, attempt + 1, token, currentPass), 2000);
         return;
       }
 
@@ -245,14 +259,12 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
 
       conn.on('open', () => {
         setConnState('connected');
-        setSuccessMsg('Terhubung! Selamat bermain bersama 💕');
+        setSuccessMsg('🔒 Terhubung secara E2EE! Selamat bermain bersama 💕');
         setErrorMsg('');
-        // Joiner also calls creator for redundancy (both sides call each other)
-        // This ensures video flows even if creator's outgoing call was blocked
         makeCall(creatorId, stream);
       });
     } catch (e) {
-      setTimeout(() => joinAndConnect(room, stream, attempt + 1), 2000);
+      setTimeout(() => joinAndConnect(room, stream, attempt + 1, token, currentPass), 2000);
     }
   };
 
@@ -269,9 +281,13 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.message);
-      setIsCreator(true); setRoomActive(true);
+      setIsCreator(true);
+      setRoomActive(true);
+      setRoomToken(d.roomToken || '');
+      if (d.roomToken) sessionStorage.setItem('bluuu_room_token', d.roomToken);
+
       const stream = await startCamera();
-      if (stream) initPeer(d.roomCode, 'creator', stream);
+      if (stream) initPeer(d.roomCode, 'creator', stream, d.roomToken, passcode);
     } catch (e) { setErrorMsg(e.message); }
     finally { setSubmitting(false); }
   };
@@ -288,9 +304,13 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       });
       const d = await r.json();
       if (!r.ok) throw new Error(d.message);
-      setIsCreator(false); setRoomActive(true);
+      setIsCreator(false);
+      setRoomActive(true);
+      setRoomToken(d.roomToken || '');
+      if (d.roomToken) sessionStorage.setItem('bluuu_room_token', d.roomToken);
+
       const stream = await startCamera();
-      if (stream) initPeer(d.roomCode, 'joiner', stream);
+      if (stream) initPeer(d.roomCode, 'joiner', stream, d.roomToken, passcode);
     } catch (e) { setErrorMsg(e.message); }
     finally { setSubmitting(false); }
   };
@@ -306,37 +326,45 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
      ═══════════════════════════════════════════ */
   if (mode === CONNECTION_MODES.NONE) {
     return (
-      <div className="glass connection-card">
-        <div>
-          <h2 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: '-0.03em', marginBottom: 6 }}>
-            Pilih Mode
-          </h2>
-          <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Bagaimana Anda bermain bersama hari ini?</p>
-        </div>
-
-        <div className="mode-selector-grid">
-          {/* Local */}
-          <button onClick={() => setMode(CONNECTION_MODES.LOCAL)} className="glass" style={{
-            padding: '24px 16px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-            gap: 10, alignItems: 'center', fontFamily: 'inherit', border: '1.5px solid rgba(255,255,255,0.5)',
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: 16,
+        }}>
+          {/* Local Mode Card */}
+          <button onClick={() => setMode(CONNECTION_MODES.LOCAL)} className="glass-interactive mode-card" style={{
+            padding: 24, borderRadius: 20, textAlign: 'left',
+            display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer',
+            border: '1px solid rgba(255,255,255,0.4)',
+            background: 'var(--glass-bg)',
+            transition: 'all 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
           }}>
-            <span style={{ fontSize: 32 }}>💻</span>
-            <span style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>Berdua Langsung</span>
-            <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Satu layar, lebih intim</span>
+            <span style={{ fontSize: 32 }}>📸</span>
+            <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--text-primary)' }}>Satu Layar (Lokal)</span>
+            <span style={{ fontSize: 12.5, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>
+              Gunakan 1 perangkat bersama. Langsung aktifkan kamera tanpa setup room.
+            </span>
+            <span className="pill pill-pink" style={{ alignSelf: 'flex-start', marginTop: 4 }}>Mulai Cepat ⚡</span>
           </button>
 
-          {/* Remote */}
-          <button onClick={() => setMode(CONNECTION_MODES.REMOTE)} style={{
-            padding: '24px 16px', cursor: 'pointer', display: 'flex', flexDirection: 'column',
-            gap: 10, alignItems: 'center', fontFamily: 'inherit',
-            background: 'linear-gradient(180deg, #ff6b8a 0%, #e8446a 100%)',
-            border: '1px solid rgba(255,255,255,0.2)', borderRadius: 'var(--radius-xl)',
-            boxShadow: '0 8px 28px rgba(232,68,106,0.35), 0 0.5px 0 rgba(255,255,255,0.3) inset',
+          {/* Remote Mode Card */}
+          <button onClick={() => setMode(CONNECTION_MODES.REMOTE)} className="glass-interactive mode-card" style={{
+            padding: 24, borderRadius: 20, textAlign: 'left',
+            display: 'flex', flexDirection: 'column', gap: 8, cursor: 'pointer',
+            background: 'linear-gradient(135deg, rgba(232,68,106,0.85) 0%, rgba(255,107,138,0.75) 100%)',
+            border: '1px solid rgba(255,255,255,0.5)',
+            boxShadow: '0 8px 32px rgba(232,68,106,0.25), 0 1px 0 rgba(255,255,255,0.3) inset',
             transition: 'all 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
           }}>
             <span style={{ fontSize: 32 }}>📡</span>
-            <span style={{ fontWeight: 700, fontSize: 13, color: '#fff' }}>Jarak Jauh (LDR)</span>
-            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>WebRTC + kode privat</span>
+            <span style={{ fontWeight: 700, fontSize: 16, color: '#fff' }}>Jarak Jauh (LDR)</span>
+            <span style={{ fontSize: 12.5, color: 'rgba(255,255,255,0.85)', lineHeight: 1.5 }}>
+              Hubungkan 2 HP/Laptop secara terenkripsi P2P dengan kode room & sandi privat.
+            </span>
+            <span className="pill" style={{ alignSelf: 'flex-start', marginTop: 4, background: 'rgba(255,255,255,0.25)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }}>
+              🔒 E2EE WebRTC
+            </span>
           </button>
         </div>
       </div>
@@ -358,12 +386,17 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
             mode === CONNECTION_MODES.LOCAL ? 'dot-green' : 'dot-red'
           }`} />
           <div>
-            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)' }}>
-              {mode === CONNECTION_MODES.LOCAL ? 'Mode Berdua Langsung' : 'Mode Room Privat'}
+            <div style={{ fontWeight: 700, fontSize: 13, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span>{mode === CONNECTION_MODES.LOCAL ? 'Mode Berdua Langsung' : 'Mode Room Privat Terenkripsi'}</span>
+              {mode === CONNECTION_MODES.REMOTE && connState === 'connected' && (
+                <span style={{ fontSize: 10, background: 'rgba(16,185,129,0.12)', color: '#10b981', padding: '2px 6px', borderRadius: 6, fontWeight: 800 }}>
+                  🔒 E2EE
+                </span>
+              )}
             </div>
             <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
               {connState === 'connected'  ? `Terhubung · ${roomCode.toUpperCase()}` :
-               connState === 'connecting' ? 'Menghubungkan...' :
+               connState === 'connecting' ? 'Menghubungkan via P2P...' :
                mode === CONNECTION_MODES.LOCAL ? 'Kamera aktif' : 'Belum terhubung'}
             </div>
           </div>
@@ -376,26 +409,26 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
         <div className="connection-forms-grid">
           {/* Create */}
           <form onSubmit={handleCreate} className="connection-form-item-left">
-            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Room Baru</div>
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>✨ Buat Room Baru (Terenkripsi)</div>
             <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
-            <label style={labelStyle}>Kata Sandi</label>
+            <label style={labelStyle}>Kata Sandi Kamar</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
             <button type="submit" className="btn btn-accent" disabled={submitting} style={{ marginTop: 4 }}>
-              {submitting ? 'Membuat...' : '🚀 Buat & Aktifkan'}
+              {submitting ? 'Membuat...' : '🚀 Buat & Amankan'}
             </button>
           </form>
 
           {/* Join */}
           <form onSubmit={handleJoin} className="connection-form-item-right">
-            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Room</div>
+            <div style={{ fontWeight: 700, fontSize: 12, color: 'var(--text-primary)' }}>🔑 Masuk Room Privat</div>
             <label style={labelStyle}>Kode Room</label>
             <input className="field" placeholder="BLUUU-1502" value={roomCode} onChange={e => setRoomCode(e.target.value)} required />
-            <label style={labelStyle}>Kata Sandi</label>
+            <label style={labelStyle}>Kata Sandi Kamar</label>
             <input className="field" type="password" placeholder="••••••••" value={passcode} onChange={e => setPasscode(e.target.value)} required />
             <button type="submit" className="btn btn-glass" disabled={submitting}
               style={{ marginTop: 4, border: '1.5px solid rgba(232,68,106,0.2)', color: 'var(--accent-dark)' }}>
-              {submitting ? 'Bergabung...' : '🔑 Bergabung'}
+              {submitting ? 'Bergabung...' : '🔑 Masuk Terenkripsi'}
             </button>
           </form>
         </div>
@@ -404,11 +437,11 @@ export default function WebRTCConnection({ mode, setMode, onConnectionReady, onD
       {/* Active room code display */}
       {mode === CONNECTION_MODES.REMOTE && roomActive && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, borderTop: '1px solid rgba(0,0,0,0.04)', paddingTop: 14 }}>
-          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>🔒 Room:</span>
+          <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>🔒 Room Privat:</span>
           <code style={{ fontWeight: 800, fontSize: 13, color: 'var(--accent-dark)', background: 'rgba(232,68,106,0.08)', padding: '3px 12px', borderRadius: 8 }}>
             {roomCode.toUpperCase()}
           </code>
-          <button className="btn btn-glass btn-sm" onClick={copyCode}>{copied ? '✅ Tersalin' : '📋 Salin'}</button>
+          <button className="btn btn-glass btn-sm" onClick={copyCode}>{copied ? '✅ Tersalin' : '📋 Salin Kode'}</button>
         </div>
       )}
 

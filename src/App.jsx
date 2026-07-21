@@ -5,6 +5,7 @@ import Photobooth from './components/Photobooth';
 import CoupleGames from './components/CoupleGames';
 import AdminDashboard from './components/AdminDashboard';
 import AboutPage from './components/AboutPage';
+import CoupleChat from './components/CoupleChat';
 
 /* ─── Simple client-side router ─── */
 function useRouter() {
@@ -263,6 +264,12 @@ export default function App() {
                 remoteGameState={remoteGameState}
               />
             </div>
+
+            {/* End-to-End Encrypted Couple Chat (P2P) */}
+            <CoupleChat
+              connectionData={connectionData}
+              isRemote={mode === CONNECTION_MODES.REMOTE}
+            />
           </div>
         )}
       </main>

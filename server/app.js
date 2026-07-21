@@ -547,6 +547,124 @@ app.delete('/api/admin/frames/:id', authenticateAdmin, async (req, res) => {
 });
 
 // ─── Catch-all 404 for unknown API routes ───────────────────────────────────
+
+// ─── Game Content Aliases (/api/admin/content) ──────────────────────────────
+app.get('/api/admin/content', authenticateAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT id, game_type, text_content, sort_order, is_active, created_at FROM game_content ORDER BY game_type, sort_order ASC'
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Admin Fetch Games Error:', err);
+    res.status(500).json({ message: 'Gagal memuat list game content.' });
+  }
+});
+
+app.post('/api/admin/content', authenticateAdmin, async (req, res) => {
+  const { game_type, text_content, sort_order } = req.body;
+  if (!game_type || !text_content) {
+    return res.status(400).json({ message: 'game_type dan text_content harus diisi.' });
+  }
+  try {
+    const result = await pool.query(
+      'INSERT INTO game_content (game_type, text_content, sort_order) VALUES ($1, $2, $3) RETURNING *',
+      [game_type, text_content.trim(), sort_order || 0]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin Create Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal menambah item game.' });
+  }
+});
+
+app.put('/api/admin/content/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  const { text_content, sort_order, is_active } = req.body;
+  try {
+    const result = await pool.query(
+      'UPDATE game_content SET text_content = COALESCE($1, text_content), sort_order = COALESCE($2, sort_order), is_active = COALESCE($3, is_active) WHERE id = $4 RETURNING *',
+      [text_content, sort_order, is_active, id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Item tidak ditemukan.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Admin Update Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal mengubah item game.' });
+  }
+});
+
+app.delete('/api/admin/content/:id', authenticateAdmin, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query('DELETE FROM game_content WHERE id = $1 RETURNING id', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Item tidak ditemukan.' });
+    res.json({ message: 'Item game berhasil dihapus.' });
+  } catch (err) {
+    console.error('Admin Delete Game Item Error:', err);
+    res.status(500).json({ message: 'Gagal menghapus item game.' });
+  }
+});
+
+app.post('/api/admin/content/seed', authenticateAdmin, async (_req, res) => {
+  try {
+    await pool.query('DELETE FROM game_content');
+    const defaults = [
+      { type: 'deep', items: [
+        'Momen apa dalam hubungan kita yang paling membuatmu merasa dicintai?',
+        'Apa ketakutan terbesarmu tentang masa depan yang belum pernah kamu ceritakan?',
+        'Hal apa yang paling kamu syukuri dari caraku memperlakukanmu?',
+        'Jika kamu bisa mengulang satu hari bersamaku, hari apa yang kamu pilih?',
+        'Apa impian terbesar kita berdua yang paling ingin kamu wujudkan tahun ini?',
+        'Kapan kamu pertama kali sadar bahwa kamu benar-benar sayang padaku?',
+        'Hal kecil apa yang selalu membuatmu teringat padaku?',
+        'Kalau kita punya satu hari tanpa HP, mau ngapain?',
+        'Apa yang paling ingin kamu pelajari dari kepribadianku?',
+        'Ceritakan satu hal yang belum pernah kamu ceritakan ke siapapun.',
+      ]},
+      { type: 'truth', items: [
+        'Apa kebohongan kecil pertama yang pernah kamu katakan padaku?',
+        'Siapa yang lebih sering memulai pertengkaran?',
+        'Apa yang paling tidak kamu suka tapi tidak pernah bilang?',
+        'Apa yang kamu pikirkan saat pertama kali melihatku?',
+        'Pernahkah kamu berpura-pura setuju padahal tidak?',
+        'Hal apa yang diam-diam kamu kagumi dari orang lain?',
+        'Kapan terakhir kali kamu menangis dan kenapa?',
+      ]},
+      { type: 'dare', items: [
+        'Nyanyikan bait lagu cinta favorit dengan suara penuh!',
+        'Ceritakan kenangan paling memalukan kita.',
+        'Tulis pesan romantis 3 baris dan bacakan keras-keras.',
+        'Tiru gaya foto pre-wedding, tahan 10 detik.',
+        'Kirimkan meme lucu ke kontak paling jarang dibalas.',
+        'Buat konten TikTok 15 detik langsung sekarang.',
+      ]},
+      { type: 'likely', items: [
+        'Siapa yang lebih mungkin terlambat untuk kencan?',
+        'Siapa yang lebih mungkin menghabiskan uang lebih?',
+        'Siapa yang lebih mungkin menangis di film romantis?',
+        'Siapa yang lebih mungkin masak makan malam spesial?',
+        'Siapa yang lebih mungkin lupa ulang tahun pasangan?',
+        'Siapa yang lebih mungkin panik saat ada serangga?',
+        'Siapa yang lebih mungkin sukses dulu?',
+        'Siapa yang lebih mungkin tidur di sofa setelah ribut?',
+      ]},
+    ];
+    for (const { type, items } of defaults) {
+      for (let i = 0; i < items.length; i++) {
+        await pool.query(
+          'INSERT INTO game_content (game_type, text_content, sort_order) VALUES ($1, $2, $3)',
+          [type, items[i], i + 1]
+        );
+      }
+    }
+    res.json({ message: 'Konten berhasil di-reset ke default.', count: defaults.reduce((a, d) => a + d.items.length, 0) });
+  } catch (err) {
+    console.error('Admin Seed Content Error:', err);
+    res.status(500).json({ message: 'Gagal me-reset konten.' });
+  }
+});
+
 app.use('/api', (req, res) => {
   res.status(404).json({
     status: 'not_found',

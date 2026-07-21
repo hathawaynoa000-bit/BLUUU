@@ -125,11 +125,17 @@ export default function AdminDashboard() {
         fetch(`${API}/admin/frames`, { headers }),
       ]);
       if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401 || fr.status === 401) { logout(); return; }
-      setStats(await sr.json());
-      setRooms(await rr.json());
-      setPhotos(await pr.json());
-      setContent(await cr.json());
-      setCustomFrames(await fr.json());
+      const statsData = sr.ok ? await sr.json() : null;
+      const roomsData = rr.ok ? await rr.json() : [];
+      const photosData = pr.ok ? await pr.json() : [];
+      const contentData = cr.ok ? await cr.json() : [];
+      const framesData = fr.ok ? await fr.json() : [];
+
+      setStats(statsData);
+      setRooms(Array.isArray(roomsData) ? roomsData : []);
+      setPhotos(Array.isArray(photosData) ? photosData : []);
+      setContent(Array.isArray(contentData) ? contentData : []);
+      setCustomFrames(Array.isArray(framesData) ? framesData : []);
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   };
@@ -448,7 +454,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Filtered questions table */}
-          {content.filter(c => c.game_type === contentTab).length === 0 ? (
+          {(Array.isArray(content) ? content : []).filter(c => c.game_type === contentTab).length === 0 ? (
             <div style={{ padding: '44px 24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
               <div style={{ fontSize: 36, marginBottom: 10 }}>🎮</div>
               Belum ada kuis untuk kategori ini. Tambahkan kuis baru!
@@ -464,7 +470,7 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {content.filter(c => c.game_type === contentTab).map((c) => (
+                  {(Array.isArray(content) ? content : []).filter(c => c.game_type === contentTab).map((c) => (
                     <tr key={c.id}>
                       <td>
                         {editingContent?.id === c.id ? (

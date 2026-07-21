@@ -117,23 +117,21 @@ export default function AdminDashboard() {
     if (!token) return;
     setLoading(true); setError('');
     try {
-      const [sr, rr, pr, cr, fr] = await Promise.all([
+      const [sr, rr, cr, fr] = await Promise.all([
         fetch(`${API}/admin/stats`, { headers }),
         fetch(`${API}/admin/rooms`, { headers }),
-        fetch(`${API}/admin/photos`, { headers }),
         fetch(`${API}/admin/content`, { headers }),
         fetch(`${API}/admin/frames`, { headers }),
       ]);
       if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401 || fr.status === 401) { logout(); return; }
       const statsData = sr.ok ? await sr.json() : null;
       const roomsData = rr.ok ? await rr.json() : [];
-      const photosData = pr.ok ? await pr.json() : [];
       const contentData = cr.ok ? await cr.json() : [];
       const framesData = fr.ok ? await fr.json() : [];
 
       setStats(statsData);
       setRooms(Array.isArray(roomsData) ? roomsData : []);
-      setPhotos(Array.isArray(photosData) ? photosData : []);
+      setPhotos([]);
       setContent(Array.isArray(contentData) ? contentData : []);
       setCustomFrames(Array.isArray(framesData) ? framesData : []);
     } catch (e) { setError(e.message); }
@@ -151,7 +149,7 @@ export default function AdminDashboard() {
     } catch (e) { setError(e.message); }
   };
 
-  const deletePhoto = async (id) => {
+  const deletePhoto = async () => { /* disabled for privacy */ return;
     try {
       const r = await fetch(`${API}/admin/photos/${id}`, { method: 'DELETE', headers });
       if (!r.ok) throw new Error('Gagal menghapus foto');
@@ -291,9 +289,9 @@ export default function AdminDashboard() {
 
       {/* Tabs */}
       <div className="seg-control">
-        {['overview', 'rooms', 'photos', 'games', 'frames'].map(t => (
+        {['overview', 'rooms', 'games', 'frames'].map(t => (
           <button key={t} onClick={() => setTab(t)} className={`seg-btn${tab === t ? ' active' : ''}`}>
-            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Room' : t === 'photos' ? '📸 Foto' : t === 'games' ? '🎮 Game CMS' : '🖼️ Frame Kustom'}
+            {t === 'overview' ? '📊 Statistik' : t === 'rooms' ? '🏠 Room' : t === 'games' ? '🎮 Game CMS' : '🖼️ Frame Kustom'}
           </button>
         ))}
       </div>
@@ -360,67 +358,6 @@ export default function AdminDashboard() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Photos Gallery Tab */}
-      {tab === 'photos' && (
-        <div className="glass" style={{ padding: '20px 22px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-            <span style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>Galeri Foto Global ({photos.length})</span>
-            <span className="pill pill-pink">📸 Real-time Gallery</span>
-          </div>
-
-          {photos.length === 0 ? (
-            <div style={{ padding: '44px 24px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
-              <div style={{ fontSize: 36, marginBottom: 10 }}>📸</div>
-              Belum ada foto strip diunggah ke database.
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: 14 }}>
-              {photos.map(ph => (
-                <div 
-                  key={ph.id} 
-                  style={{
-                    background: 'rgba(255,255,255,0.4)', borderRadius: 'var(--radius-md)', padding: 8,
-                    border: '1px solid rgba(255,255,255,0.6)', display: 'flex', flexDirection: 'column', gap: 8,
-                    boxShadow: '0 2px 10px rgba(140,60,80,0.04)'
-                  }}
-                >
-                  <div 
-                    onClick={() => setPreviewPhoto(ph.photo_data)}
-                    style={{
-                      aspectRatio: '1/3', borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
-                      border: '1px solid rgba(255,255,255,0.5)', position: 'relative'
-                    }}
-                  >
-                    <img src={ph.photo_data} alt="Strip" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      💕 {ph.couple_names}
-                    </div>
-                    <div style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>
-                      Room: {ph.room_code}
-                    </div>
-                    <div style={{ fontSize: 9, color: 'var(--text-quaternary)', marginTop: 2 }}>
-                      {new Date(ph.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
-                    </div>
-                  </div>
-                  <button 
-                    className="btn btn-outline btn-sm" 
-                    onClick={() => setDeletingPhoto(ph.id)}
-                    style={{ 
-                      borderColor: 'rgba(255,59,48,0.25)', color: '#b71c1c', padding: '4px', width: '100%', 
-                      fontSize: 10, borderRadius: 6 
-                    }}
-                  >
-                    🗑 Hapus
-                  </button>
-                </div>
-              ))}
             </div>
           )}
         </div>

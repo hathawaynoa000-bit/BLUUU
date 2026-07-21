@@ -251,38 +251,13 @@ app.get('/api/rooms/peers/:roomCode', authenticateRoom, async (req, res) => {
   }
 });
 
-app.post('/api/photos/upload', authenticateRoom, async (req, res) => {
-  const { roomCode, photoData, coupleNames } = req.body;
-
-  if (!roomCode || !photoData || !coupleNames) {
-    return res.status(400).json({ message: 'Data foto tidak lengkap.' });
-  }
-
-  try {
-    await pool.query(
-      'INSERT INTO photo_strips (room_code, photo_data, couple_names) VALUES ($1, $2, $3)',
-      [roomCode.toUpperCase(), photoData, coupleNames]
-    );
-    res.status(201).json({ message: 'Foto strip berhasil disimpan ke galeri kamar!' });
-  } catch (err) {
-    console.error('Photo Upload Error:', err);
-    res.status(500).json({ message: 'Gagal mengunggah foto.' });
-  }
+// ─── 100% Client-Only Privacy (No Server Photo Storage) ─────────────────────
+app.post('/api/photos/upload', (_req, res) => {
+  res.status(200).json({ message: '🛡️ Mode Privasi Aktif: Foto dikelola langsung di perangkat pengguna (Client-Only).' });
 });
 
-app.get('/api/photos/room/:roomCode', authenticateRoom, async (req, res) => {
-  const { roomCode } = req.params;
-
-  try {
-    const result = await pool.query(
-      'SELECT id, couple_names, created_at, photo_data FROM photo_strips WHERE room_code = $1 ORDER BY created_at DESC',
-      [roomCode.toUpperCase()]
-    );
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Fetch Room Photos Error:', err);
-    res.status(500).json({ message: 'Gagal mengambil galeri foto.' });
-  }
+app.get('/api/photos/room/:roomCode', (_req, res) => {
+  res.json([]);
 });
 
 app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
@@ -340,25 +315,19 @@ app.delete('/api/admin/rooms/:id', authenticateAdmin, async (req, res) => {
   }
 });
 
-app.get('/api/admin/photos', authenticateAdmin, async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM photo_strips ORDER BY created_at DESC');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Admin Fetch Photos Error:', err);
-    res.status(500).json({ message: 'Gagal memuat galeri global.' });
-  }
+// ─── Zero-Knowledge Photo Privacy for Users ─────────────────────────────────
+app.get('/api/admin/photos', authenticateAdmin, (_req, res) => {
+  res.status(403).json({
+    status: 'forbidden',
+    message: '🔒 Privasi Pengguna Terkunci: Admin dilarang mengakses atau melihat foto privat yang diambil oleh pasangan.',
+  });
 });
 
-app.delete('/api/admin/photos/:id', authenticateAdmin, async (req, res) => {
-  const { id } = req.params;
-  try {
-    await pool.query('DELETE FROM photo_strips WHERE id = $1', [id]);
-    res.json({ message: 'Foto strip berhasil dihapus dari sistem.' });
-  } catch (err) {
-    console.error('Admin Delete Photo Error:', err);
-    res.status(500).json({ message: 'Gagal menghapus foto.' });
-  }
+app.delete('/api/admin/photos/:id', authenticateAdmin, (_req, res) => {
+  res.status(403).json({
+    status: 'forbidden',
+    message: '🔒 Privasi Pengguna Terkunci: Foto hanya dapat dikelola oleh pemilik kamar privat.',
+  });
 });
 
 // ─── Game Content Public (Read-Only) ─────────────────────────────────────────

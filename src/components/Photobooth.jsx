@@ -468,7 +468,20 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
       if (res.ok) setGallery(await res.json());
     } catch (_) {}
   };
-  useEffect(() => { fetchGallery(); }, [roomCode]);
+    // Listen for P2P Photo Strip Sync from partner
+  useEffect(() => {
+    const handleP2PPhoto = (e) => {
+      const data = e.detail;
+      if (data?.type === 'SYNC_PHOTO_STRIP' && data.payload) {
+        setGallery(prev => {
+          if (prev.some(p => p.id === data.payload.id)) return prev;
+          return [data.payload, ...prev];
+        });
+      }
+    };
+    window.addEventListener('webrtc-chat-data', handleP2PPhoto);
+    return () => window.removeEventListener('webrtc-chat-data', handleP2PPhoto);
+  }, []);
 
   // ─── Countdown & capture ─────────────────────────────────────────────────
   const doCountdown = async (broadcast = false) => {
@@ -687,20 +700,23 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
     }
   };
 
-  const uploadPhoto = async (photoData) => {
-    setUploading(true);
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (connectionData?.roomToken) headers['Authorization'] = `Bearer ${connectionData.roomToken}`;
-      if (connectionData?.passcode) headers['x-room-passcode'] = connectionData.passcode;
-      const res = await fetch(`${API}/photos/upload`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ roomCode, photoData, coupleNames: coupleNamesRef.current || 'Kita' }),
+  const uploadPhoto = (photoData) => {
+    const photoItem = {
+      id: Date.now() + '-' + Math.random().toString(36).substr(2, 4),
+      photo_data: photoData,
+      couple_names: coupleNamesRef.current || 'Kita',
+      created_at: new Date().toISOString(),
+    };
+
+    setGallery(prev => [photoItem, ...prev]);
+
+    // Send P2P to partner via WebRTC DataChannel (0% server storage)
+    if (connectionData?.sendData) {
+      connectionData.sendData({
+        type: 'SYNC_PHOTO_STRIP',
+        payload: photoItem,
       });
-      if (res.ok) fetchGallery();
-    } catch (_) {}
-    finally { setUploading(false); }
+    }
   };
 
   const download = () => {
@@ -1039,7 +1055,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
                 🎉 Strip Selesai!
               </div>
               <div style={{ fontSize: 11.5, color: 'var(--text-tertiary)' }}>
-                {uploading ? '⬆️ Mengunggah ke galeri...' : '4 foto terabadikan. Klik untuk preview.'}
+                '4 foto terabadikan secara P2P. Klik untuk preview & unduh.'
               </div>
             </div>
           </div>
@@ -1067,7 +1083,7 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
       {roomCode && gallery.length > 0 && (
         <div className="glass workspace-card" style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>
-            🌸 Galeri Foto Room ({gallery.length})
+            🌸 Galeri Sesi Lokal ({gallery.length}) · 🛡️ Privat (Tersimpan di Perangkat Anda)
           </div>
           <div style={{ display: 'flex', gap: 10, overflowX: 'auto', paddingBottom: 6 }}>
             {gallery.map(g => (

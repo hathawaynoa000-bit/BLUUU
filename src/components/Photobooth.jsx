@@ -331,9 +331,9 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   const flashRef       = useRef(null);
   const shootingRef    = useRef(false);
 
-  // Own local stream — started directly, not relying on connectionData timing
-  const [localStream,  setLocalStream]  = useState(null);
-  const [cameraError,  setCameraError]  = useState('');
+  // Reuse the local stream initialized by WebRTCConnection to prevent double-acquisition on mobile
+  const localStream = connectionData?.localStream;
+  const cameraError = '';
 
   const [frame,    setFrame]    = useState(FRAMES[0]);
   const [filter,   setFilter]   = useState(FILTERS[0]);
@@ -400,42 +400,6 @@ export default function Photobooth({ connectionData, syncShutterState, triggerSy
   // Remote stream from WebRTC (via connectionData)
   const remoteStream = connectionData?.remoteStream;
   const roomCode     = connectionData?.roomCode;
-
-  // ─── Start camera directly in this component ────────────────────────────
-  useEffect(() => {
-    let active = true;
-    const startCam = async () => {
-      // Try video+audio, then video only fallback
-      for (const constraints of [
-        { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: true },
-        { video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: 'user' }, audio: false },
-        { video: true, audio: true },
-        { video: true, audio: false },
-      ]) {
-        try {
-          const stream = await navigator.mediaDevices.getUserMedia(constraints);
-          if (!active) { stream.getTracks().forEach(t => t.stop()); return; }
-          setLocalStream(stream);
-          setCameraError('');
-          return;
-        } catch (_) {}
-      }
-      if (active) setCameraError('Gagal mengakses kamera. Pastikan izin kamera diberikan di browser.');
-    };
-    startCam();
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  // Cleanup camera on unmount
-  useEffect(() => {
-    return () => {
-      if (localStream) {
-        localStream.getTracks().forEach(t => t.stop());
-      }
-    };
-  }, [localStream]);
 
   // ─── Assign streams to video elements ───────────────────────────────────
   useEffect(() => {

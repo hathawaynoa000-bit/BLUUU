@@ -93,8 +93,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [deleting, setDeleting] = useState(null);
-  const [deletingPhoto, setDeletingPhoto] = useState(null);
-  const [previewPhoto, setPreviewPhoto] = useState(null);
+  
+  
   const [tab, setTab] = useState('overview');
 
   // Game Content CRUD States
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
         fetch(`${API}/admin/content`, { headers }),
         fetch(`${API}/admin/frames`, { headers }),
       ]);
-      if (sr.status === 401 || rr.status === 401 || pr.status === 401 || cr.status === 401 || fr.status === 401) { logout(); return; }
+      if (sr.status === 401 || rr.status === 401 || cr.status === 401 || fr.status === 401) { logout(); return; }
       const statsData = sr.ok ? await sr.json() : null;
       const roomsData = rr.ok ? await rr.json() : [];
       const contentData = cr.ok ? await cr.json() : [];
@@ -705,34 +705,6 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Delete Photo modal */}
-      {deletingPhoto && (
-        <div className="overlay" onClick={() => setDeletingPhoto(null)}>
-          <div className="panel" style={{ maxWidth: 340 }} onClick={e => e.stopPropagation()}>
-            <div style={{ textAlign: 'center', marginBottom: 20 }}>
-              <div style={{ fontSize: 44, marginBottom: 10 }}>🗑️</div>
-              <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 5 }}>Hapus Foto?</h3>
-              <p style={{ fontSize: 13, color: 'var(--text-tertiary)' }}>Data foto strip akan dihapus permanen dari galeri.</p>
-            </div>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button className="btn btn-glass" style={{ flex: 1 }} onClick={() => setDeletingPhoto(null)}>Batal</button>
-              <button className="btn btn-accent" style={{ flex: 1, background: 'linear-gradient(180deg, #ff6b6b, #dc2626)', boxShadow: '0 6px 20px rgba(220,38,38,0.3)' }} onClick={() => deletePhoto(deletingPhoto)}>Hapus</button>
-            </div>
           </div>
-        </div>
-      )}
-
-      {/* Photo Preview modal */}
-      {previewPhoto && (
-        <div className="overlay" onClick={() => setPreviewPhoto(null)}>
-          <div style={{ position: 'relative' }}>
-            <img src={previewPhoto} alt="Preview" style={{ maxWidth: '90vw', maxHeight: '80vh', borderRadius: 20, boxShadow: '0 24px 60px rgba(0,0,0,0.25)' }} />
-            <button onClick={() => setPreviewPhoto(null)} style={{ position: 'absolute', top: -10, right: -10, width: 32, height: 32, borderRadius: '50%', border: 'none', background: '#fff', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>✕</button>
-          </div>
-        </div>
-      )}
-    </div>
   );
 }
-
-const labelStyle = { display: 'block', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 };

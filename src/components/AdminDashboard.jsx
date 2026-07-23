@@ -704,7 +704,8 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
-
-          </div>
+    </div>
   );
 }
+
+const labelStyle = { display: 'block', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 5 };
